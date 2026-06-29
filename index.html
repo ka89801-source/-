@@ -378,6 +378,8 @@
 
   footer.foot{text-align:center;margin-top:34px;font-size:12px;color:var(--text-soft)}
   footer.foot b{color:var(--gold-deep)}
+  .save-ok{color:var(--teal);font-weight:700}
+  .save-bad{color:var(--clay);font-weight:700}
 
   /* ---------- Modal ---------- */
   .overlay{position:fixed;inset:0;background:rgba(8,23,38,.5);backdrop-filter:blur(3px);
@@ -668,7 +670,7 @@
   </section>
 
   <footer class="foot">
-    صُمّم بنظام ألوان <b>الحبر البحري والذهب الصحراوي</b> · بياناتك محفوظة تلقائيًا على جهازك
+    صُمّم بنظام ألوان <b>الحبر البحري والذهب الصحراوي</b> · <span id="saveStatus">جارٍ التحقق من الحفظ…</span>
   </footer>
 </div>
 
@@ -686,25 +688,69 @@
    ============================================================ */
 
 const KEY = 'raseed:state:v2';
+const BACKUP_KEY = KEY + ':backup';
+const LAST_SAVED_KEY = KEY + ':lastSaved';
+let storageFailureNotified = false;
 
-/* ---- storage layer ---- */
+/* ---- storage layer: localStorage أولًا مع تحقق ونسخة احتياطية ---- */
+function validStoredState(raw){
+  if (!raw) return false;
+  try{
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && parsed.months && typeof parsed.months === 'object';
+  }catch(e){ return false; }
+}
+
 const Store = {
+  available(){
+    try{
+      const testKey = KEY + ':test';
+      localStorage.setItem(testKey, '1');
+      const ok = localStorage.getItem(testKey) === '1';
+      localStorage.removeItem(testKey);
+      return ok;
+    }catch(e){ return false; }
+  },
   async get(k){
     try{
-      if (typeof window !== 'undefined' && window.storage && window.storage.get){
-        const r = await window.storage.get(k);
-        return r ? r.value : null;
+      const primary = localStorage.getItem(k);
+      if (validStoredState(primary)) return primary;
+
+      const backup = localStorage.getItem(BACKUP_KEY);
+      if (validStoredState(backup)){
+        localStorage.setItem(k, backup);
+        return backup;
       }
-    }catch(e){}
-    try{ return localStorage.getItem(k); }catch(e){ return null; }
-  },
-  async set(k,v){
+    }catch(e){ console.error('Local storage read failed:', e); }
+
+    // ترحيل اختياري من مخزن بيئة التصميم القديمة إن وُجد
     try{
-      if (typeof window !== 'undefined' && window.storage && window.storage.set){
-        await window.storage.set(k,v); return;
+      if (typeof window !== 'undefined' && window.storage && window.storage.get){
+        const legacy = await window.storage.get(k);
+        const value = legacy ? legacy.value : null;
+        if (validStoredState(value)){
+          this.set(k, value);
+          return value;
+        }
       }
-    }catch(e){}
-    try{ localStorage.setItem(k,v); }catch(e){}
+    }catch(e){ console.warn('Legacy storage migration skipped:', e); }
+    return null;
+  },
+  set(k,v){
+    if (!this.available()) throw new Error('Browser storage is unavailable');
+
+    const previous = localStorage.getItem(k);
+    if (validStoredState(previous) && previous !== v){
+      localStorage.setItem(BACKUP_KEY, previous);
+    }
+
+    localStorage.setItem(k, v);
+    localStorage.setItem(LAST_SAVED_KEY, new Date().toISOString());
+
+    if (localStorage.getItem(k) !== v){
+      throw new Error('Storage verification failed');
+    }
+    return true;
   }
 };
 
@@ -748,7 +794,34 @@ function monthName(key){
 function expensesOf(monthK){ return (S.months[monthK] && S.months[monthK].expenses) || []; }
 function catById(id){ return S.categories.find(c=>c.id===id); }
 
-async function save(){ await Store.set(KEY, JSON.stringify(S)); }
+function updateSaveStatus(ok){
+  const el = document.getElementById('saveStatus');
+  if (!el) return;
+  if (ok){
+    const now = new Date();
+    el.textContent = 'محفوظ تلقائيًا · ' + now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+    el.className = 'save-ok';
+  } else {
+    el.textContent = 'تعذّر الحفظ على هذا المتصفح';
+    el.className = 'save-bad';
+  }
+}
+
+function save(){
+  try{
+    Store.set(KEY, JSON.stringify(S));
+    updateSaveStatus(true);
+    return true;
+  }catch(e){
+    console.error('Raseed save failed:', e);
+    updateSaveStatus(false);
+    if (!storageFailureNotified){
+      storageFailureNotified = true;
+      setTimeout(()=>toast('تعذّر حفظ البيانات. تأكد من السماح ببيانات المواقع وعدم استخدام التصفح الخاص.'), 0);
+    }
+    return false;
+  }
+}
 
 /* ============================================================
    النموذج الحسابي (تقسيم الراتب):
@@ -1104,17 +1177,29 @@ function renderLiving(ctx){
 
   const todayInput = document.getElementById('livingToday');
   const saveToday = document.getElementById('saveLivingToday');
+  let todaySaveTimer;
   if (saveToday) saveToday.onclick = ()=>{
     const v = parseFloat(todayInput.value)||0;
     setLivingDay(todayKey, v); render(); toast('تم حفظ صرف اليوم');
   };
-  if (todayInput) todayInput.addEventListener('keydown', e=>{ if(e.key==='Enter') saveToday.click(); });
+  if (todayInput){
+    todayInput.addEventListener('input', ()=>{
+      clearTimeout(todaySaveTimer);
+      todaySaveTimer = setTimeout(()=>{
+        const v = parseFloat(todayInput.value)||0;
+        setLivingDay(todayKey, v);
+      }, 180);
+    });
+    todayInput.addEventListener('keydown', e=>{ if(e.key==='Enter') saveToday.click(); });
+  }
 
   box.querySelectorAll('.lv-day input[data-day]').forEach(inp=>{
-    inp.addEventListener('change', ()=>{
+    inp.addEventListener('input', ()=>{
       const v = parseFloat(inp.value)||0;
-      setLivingDay(inp.dataset.day, v); render();
+      setLivingDay(inp.dataset.day, v);
+      inp.closest('.lv-day')?.classList.toggle('has-val', v>0);
     });
+    inp.addEventListener('change', ()=> render());
   });
 }
 
@@ -1412,9 +1497,34 @@ function bind(){
     S.living = { monthly: 0 };
   }
   delete S.goal;
+  save();
   bind();
   render();
+
+  if (!Store.available()){
+    updateSaveStatus(false);
+    setTimeout(()=>toast('الحفظ المحلي غير متاح في هذا المتصفح. افتح الموقع في نافذة عادية واسمح ببيانات المواقع.'), 200);
+  } else if (navigator.storage && navigator.storage.persist){
+    navigator.storage.persist().catch(()=>{});
+  }
 })();
+
+/* حفظ احتياطي عند مغادرة الصفحة أو إخفائها */
+window.addEventListener('pagehide', ()=>{ if (S) save(); });
+window.addEventListener('beforeunload', ()=>{ if (S) save(); });
+document.addEventListener('visibilitychange', ()=>{
+  if (document.visibilityState === 'hidden' && S) save();
+});
+
+/* مزامنة البيانات عند فتح الموقع في أكثر من تبويب */
+window.addEventListener('storage', (e)=>{
+  if (e.key !== KEY || !e.newValue || !validStoredState(e.newValue)) return;
+  try{
+    S = JSON.parse(e.newValue);
+    render();
+    updateSaveStatus(true);
+  }catch(err){}
+});
 
 /* ============================================================
    معيار الالتزام — إضافة غير تدخّلية (لا تُعدّل أي دالة قائمة)
