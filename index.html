@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>رَصيد · إدارة الراتب والمصروفات</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@600;700;800&display=swap');
+
+  :root{
+    --ink-900:#081726;     /* أعمق حبر */
+    --ink-800:#0E2440;
+    --ink-700:#143257;
+    --ink-600:#1C4E6B;
+    --ink-300:#7A8B99;
+    --gold:#C9A14A;        /* الذهب الصحراوي */
+    --gold-soft:#D9B978;
+    --gold-deep:#A8763C;
+    --teal:#2E7D6E;        /* الموجب / المتبقي */
+    --teal-soft:#3E9C89;
+    --clay:#B5563F;        /* التجاوز / التحذير */
+    --sage:#6B7E6A;
+    --parchment:#F6F2E9;   /* الخلفية الدافئة */
+    --parchment-2:#EFE9DA;
+    --card:#FFFFFF;
+    --line:#E6DECB;
+    --text:#16263A;
+    --text-soft:#5C6B7A;
+    --shadow:0 1px 2px rgba(8,23,38,.04), 0 8px 28px rgba(8,23,38,.06);
+    --radius:18px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 90% -10%, rgba(201,161,74,.10), transparent 60%),
+      var(--parchment);
+    color:var(--text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    font-variant-numeric:tabular-nums;
+  }
+  .num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;display:inline-block}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  input,select{font-family:inherit}
+  ::selection{background:var(--gold);color:#fff}
+
+  /* ---------- Shell ---------- */
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 20px 80px}
+
+  header.topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:14px 18px;margin-bottom:22px;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .mark{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(150deg,var(--ink-800),var(--ink-600));
+    display:grid;place-items:center;position:relative;flex:none;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .mark svg{width:22px;height:22px}
+  .brand h1{font-family:'Cairo',sans-serif;font-size:21px;font-weight:800;letter-spacing:.5px;line-height:1}
+  .brand p{font-size:12px;color:var(--text-soft);margin-top:3px}
+
+  .month-nav{display:flex;align-items:center;gap:6px;background:var(--parchment-2);
+    border:1px solid var(--line);border-radius:12px;padding:5px}
+  .month-nav button{width:32px;height:32px;border-radius:8px;color:var(--ink-700);
+    display:grid;place-items:center;transition:.15s}
+  .month-nav button:hover{background:#fff}
+  .month-nav .label{min-width:118px;text-align:center;font-weight:600;font-size:14px}
+
+  .ghost-btn{
+    display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;
+    color:var(--ink-700);background:var(--parchment-2);
+    border:1px solid var(--line);border-radius:11px;padding:9px 14px;transition:.15s
+  }
+  .ghost-btn:hover{background:#fff;border-color:var(--gold-soft)}
+  .ghost-btn svg{width:16px;height:16px}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    background:linear-gradient(160deg,var(--ink-800),var(--ink-900) 70%);
+    border-radius:24px;padding:30px 32px;color:#fff;position:relative;overflow:hidden;
+    box-shadow:0 18px 50px rgba(8,23,38,.28);margin-bottom:22px;
+  }
+  .hero::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(700px 300px at 88% -30%, rgba(201,161,74,.22), transparent 55%)}
+  .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;position:relative;z-index:1;flex-wrap:wrap}
+  .hero-label{font-size:13px;color:rgba(255,255,255,.65);letter-spacing:.6px}
+  .salary-row{display:flex;align-items:baseline;gap:12px;margin-top:6px}
+  .salary-amount{font-family:'Cairo',sans-serif;font-size:46px;font-weight:800;letter-spacing:.5px;line-height:1}
+  .salary-cur{font-size:18px;color:var(--gold-soft);font-weight:700}
+  .edit-salary{margin-top:10px;display:inline-flex;align-items:center;gap:7px;
+    font-size:12.5px;color:rgba(255,255,255,.7);background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:6px 11px;transition:.15s}
+  .edit-salary:hover{background:rgba(255,255,255,.14);color:#fff}
+  .edit-salary svg{width:13px;height:13px}
+
+  .hero-mini{text-align:left;position:relative;z-index:1}
+  .hero-mini .v{font-family:'Cairo',sans-serif;font-size:26px;font-weight:800}
+  .hero-mini .v.pos{color:var(--gold-soft)}
+  .hero-mini .v.neg{color:#E8A08C}
+  .hero-mini .k{font-size:12.5px;color:rgba(255,255,255,.6)}
+
+  /* allocation ribbon — signature element */
+  .ribbon-wrap{position:relative;z-index:1;margin-top:26px}
+  .ribbon-head{display:flex;justify-content:space-between;font-size:12.5px;
+    color:rgba(255,255,255,.7);margin-bottom:9px}
+  .ribbon{height:16px;border-radius:9px;display:flex;overflow:hidden;
+    background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+  .ribbon span{height:100%;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+  .ribbon span:first-child{border-radius:0 9px 9px 0}
+  .ribbon span:last-child{border-radius:9px 0 0 9px}
+  .ribbon-legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:13px}
+  .lg{display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(255,255,255,.85)}
+  .lg .dot{width:9px;height:9px;border-radius:3px;flex:none}
+  .lg b{font-weight:700}
+
+  /* ---------- KPI strip ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:17px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;margin-bottom:11px}
+  .kpi .ico svg{width:18px;height:18px}
+  .kpi .k{font-size:12.5px;color:var(--text-soft)}
+  .kpi .v{font-family:'Cairo',sans-serif;font-size:25px;font-weight:800;line-height:1.15;margin-top:2px}
+  .kpi small{font-size:12px;color:var(--text-soft);font-weight:500}
+  .i-gold{background:rgba(201,161,74,.14);color:var(--gold-deep)}
+  .i-ink{background:rgba(20,50,87,.10);color:var(--ink-700)}
+  .i-teal{background:rgba(46,125,110,.13);color:var(--teal)}
+  .i-clay{background:rgba(181,86,63,.13);color:var(--clay)}
+  .v.teal{color:var(--teal)} .v.clay{color:var(--clay)}
+
+  /* ---------- Main grid ---------- */
+  .grid{display:grid;grid-template-columns:1.55fr 1fr;gap:20px;align-items:start}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;
+    padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+  .panel-head h2{font-family:'Cairo',sans-serif;font-size:16.5px;font-weight:700;display:flex;align-items:center;gap:9px}
+  .panel-head h2 svg{width:18px;height:18px;color:var(--gold-deep)}
+  .panel-head .sub{font-size:12px;color:var(--text-soft);font-weight:500}
+  .panel-body{padding:8px 20px 20px}
+
+  /* category rows */
+  .cat{padding:14px 0;border-bottom:1px solid var(--parchment-2)}
+  .cat:last-child{border-bottom:none}
+  .cat-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+  .cat-name{display:flex;align-items:center;gap:9px;font-weight:600;font-size:14.5px}
+  .cat-name .swatch{width:11px;height:11px;border-radius:4px;flex:none}
+  .cat-name .grp{font-size:10.5px;color:var(--text-soft);font-weight:500;
+    background:var(--parchment-2);padding:2px 7px;border-radius:6px}
+  .cat-vals{font-size:13px;color:var(--text-soft);white-space:nowrap}
+  .cat-vals b{color:var(--text);font-weight:700}
+  .cat-vals.over b{color:var(--clay)}
+  .bar{height:9px;border-radius:6px;background:var(--parchment-2);overflow:hidden;position:relative}
+  .bar i{display:block;height:100%;border-radius:6px;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+  .cat-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .cat-pct{font-size:11.5px;color:var(--text-soft)}
+  .cat-pct.over{color:var(--clay);font-weight:600}
+  .edit-budget{font-size:11.5px;color:var(--ink-600);font-weight:600;opacity:0;transition:.15s}
+  .cat:hover .edit-budget{opacity:1}
+  .edit-budget:hover{color:var(--gold-deep)}
+  .cat-actions{display:flex;align-items:center;gap:14px}
+  .del-cat{font-size:11.5px;color:var(--text-soft);font-weight:600;opacity:0;transition:.15s;
+    display:inline-flex;align-items:center;gap:5px}
+  .cat:hover .del-cat{opacity:1}
+  .del-cat:hover{color:var(--clay)}
+  .del-cat svg{width:13px;height:13px}
+  .cat-foot-r{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .paid-toggle{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
+    color:var(--text-soft);cursor:pointer;user-select:none}
+  .paid-toggle input{display:none}
+  .paid-toggle .box{width:17px;height:17px;border-radius:6px;border:1.5px solid var(--line);
+    background:var(--card);display:grid;place-items:center;transition:.15s;flex:none}
+  .paid-toggle .box svg{width:12px;height:12px;color:#fff;opacity:0;transition:.15s}
+  .paid-toggle input:checked + .box{background:var(--teal);border-color:var(--teal)}
+  .paid-toggle input:checked + .box svg{opacity:1}
+  .paid-toggle:hover .box{border-color:var(--teal)}
+  .paid-badge{font-size:10px;font-weight:700;color:#fff;background:var(--teal);
+    padding:2px 8px;border-radius:6px;letter-spacing:.3px}
+  .cat-pct.paid{color:var(--teal);font-weight:600}
+  .cat.is-paid .swatch{box-shadow:0 0 0 2px rgba(46,125,110,.25)}
+  .cat-count{font-size:10.5px;font-weight:700;color:var(--ink-700);background:var(--parchment-2);
+    min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:inline-grid;place-items:center}
+  .cat-items{margin-top:12px;padding-top:11px;border-top:1px dashed var(--line);
+    display:flex;flex-direction:column;gap:6px;animation:itemsIn .3s ease}
+  @keyframes itemsIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .cat-item{display:flex;align-items:center;gap:10px;font-size:12.5px;
+    background:var(--parchment);border:1px solid var(--line);border-radius:10px;padding:7px 11px}
+  .ci-dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .ci-note{flex:1;min-width:0;color:var(--text);font-weight:600;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ci-date{color:var(--text-soft);font-size:11px;white-space:nowrap}
+  .ci-amt{font-weight:700;color:var(--text);white-space:nowrap}
+  .ci-del{width:24px;height:24px;border-radius:7px;color:var(--text-soft);
+    display:grid;place-items:center;flex:none;transition:.15s}
+  .ci-del svg{width:13px;height:13px}
+  .ci-del:hover{background:rgba(181,86,63,.12);color:var(--clay)}
+  @keyframes flashRow{0%{background:rgba(201,161,74,.28)}100%{background:transparent}}
+  .cat.flash{animation:flashRow 1.7s ease}
+  @keyframes bumpKpi{0%{transform:scale(1)}28%{transform:scale(1.05)}100%{transform:scale(1)}}
+  .kpi.bump{animation:bumpKpi .55s ease}
+
+  /* donut */
+  .donut-box{display:flex;flex-direction:column;align-items:center;padding:6px 0 4px}
+  .donut{position:relative;width:188px;height:188px}
+  .donut svg{transform:rotate(-90deg)}
+  .donut .center{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+  .donut .center .big{font-family:'Cairo',sans-serif;font-size:23px;font-weight:800;line-height:1.1}
+  .donut .center .small{font-size:11.5px;color:var(--text-soft)}
+  .donut-legend{width:100%;margin-top:18px;display:flex;flex-direction:column;gap:9px}
+  .dl{display:flex;align-items:center;justify-content:space-between;font-size:13px}
+  .dl .l{display:flex;align-items:center;gap:8px;color:var(--text)}
+  .dl .l .dot{width:10px;height:10px;border-radius:3px}
+  .dl .r{color:var(--text-soft);font-weight:600}
+  .donut-empty{text-align:center;color:var(--text-soft);font-size:13px;padding:30px 10px}
+
+  /* ---------- Daily pace ---------- */
+  .pace{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .pace-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;flex-wrap:wrap}
+  .pace-status{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:14px;
+    padding:6px 12px;border-radius:10px}
+  .pace-status svg{width:16px;height:16px}
+  .pace-status.ok{color:var(--teal);background:rgba(46,125,110,.12)}
+  .pace-status.over{color:var(--clay);background:rgba(181,86,63,.12)}
+  .pace-day{font-size:12.5px;color:var(--text-soft)}
+  .pace-day b{color:var(--text);font-weight:800;font-family:'Cairo',sans-serif}
+  .pace-bar{height:9px;border-radius:6px;background:var(--parchment-2);overflow:hidden;margin-bottom:14px}
+  .pace-bar span{display:block;height:100%;border-radius:6px;transition:width .5s ease}
+  .pace-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pace-cell{background:var(--parchment);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .pc-k{font-size:11.5px;color:var(--text-soft)}
+  .pc-v{font-family:'Cairo',sans-serif;font-weight:800;font-size:20px;line-height:1.2;color:var(--ink-800)}
+  .pc-v.clay{color:var(--clay)}
+  .pc-u{font-size:11px;color:var(--text-soft)}
+  .pace-note{margin-top:13px;font-size:12.5px;line-height:1.6;padding:10px 13px;border-radius:11px}
+  .pace-note.ok{color:var(--teal);background:rgba(46,125,110,.08);border:1px solid rgba(46,125,110,.2)}
+  .pace-note.over{color:var(--clay);background:rgba(181,86,63,.08);border:1px solid rgba(181,86,63,.2)}
+
+  /* savings goal */
+  .goal{margin-top:20px;background:linear-gradient(150deg,var(--parchment-2),#fff);
+    border:1px solid var(--line);border-radius:14px;padding:16px}
+  .goal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+  .goal-head .t{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+  .goal-head .t svg{width:16px;height:16px;color:var(--gold-deep)}
+  .goal-head button{font-size:11.5px;color:var(--ink-600);font-weight:600}
+  .goal-bar{height:11px;border-radius:7px;background:#fff;border:1px solid var(--line);overflow:hidden}
+  .goal-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-deep),var(--gold-soft));
+    transition:width .5s ease}
+  .goal-vals{display:flex;justify-content:space-between;margin-top:9px;font-size:12.5px;color:var(--text-soft)}
+  .goal-vals b{color:var(--text);font-weight:700}
+
+  /* ---------- Savings & Investment ---------- */
+  .si-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:18px 20px 22px}
+  .si-box{border:1px solid var(--line);border-radius:16px;padding:18px;
+    background:linear-gradient(160deg,var(--parchment-2),#fff)}
+  .si-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+  .si-title{display:flex;align-items:center;gap:11px}
+  .si-ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none}
+  .si-ico svg{width:20px;height:20px}
+  .si-ico.sav{background:rgba(201,161,74,.16);color:var(--gold-deep)}
+  .si-ico.inv{background:rgba(46,125,110,.15);color:var(--teal)}
+  .si-name{font-family:'Cairo',sans-serif;font-weight:800;font-size:16px}
+  .si-sub{font-size:12px;color:var(--text-soft);margin-top:1px}
+  .si-edit{font-size:12px;font-weight:600;color:var(--ink-600);background:#fff;
+    border:1px solid var(--line);border-radius:9px;padding:6px 12px;transition:.15s}
+  .si-edit:hover{border-color:var(--gold-soft);color:var(--gold-deep)}
+  .si-amount{font-family:'Cairo',sans-serif;font-size:30px;font-weight:800;line-height:1.1;color:var(--ink-800)}
+  .si-amount .cur{font-size:14px;color:var(--text-soft);font-weight:600}
+  .si-label{font-size:12px;color:var(--text-soft);margin-top:2px}
+  .si-rows{margin-top:15px;display:flex;flex-direction:column;gap:9px}
+  .si-r{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text-soft)}
+  .si-r b{color:var(--text);font-weight:700}
+  .si-bar{height:9px;border-radius:6px;background:#fff;border:1px solid var(--line);overflow:hidden;margin-top:3px}
+  .si-bar i{display:block;height:100%;transition:width .5s ease}
+  .si-hint{font-size:11.5px;color:var(--gold-deep);background:rgba(201,161,74,.10);
+    border:1px dashed var(--gold-soft);border-radius:9px;padding:7px 10px;line-height:1.5}
+  .si-r b.si-on{color:var(--teal)}
+  @media(max-width:680px){.si-grid{grid-template-columns:1fr}}
+
+  /* ---------- المصروف الشهري (living) ---------- */
+  .lv-summary{display:flex;gap:18px;padding:18px 20px;flex-wrap:wrap}
+  .lv-alloc{flex:0 0 auto;min-width:180px;background:linear-gradient(160deg,var(--ink-800),var(--ink-900));
+    color:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:4px;justify-content:center}
+  .lv-alloc .lv-k{font-size:12.5px;color:rgba(255,255,255,.65)}
+  .lv-alloc .lv-amt{font-family:'Cairo',sans-serif;font-size:30px;font-weight:800;line-height:1.1}
+  .lv-alloc .lv-amt span{font-size:14px;color:var(--gold-soft);font-weight:700}
+  .lv-edit{margin-top:8px;align-self:flex-start;font-size:12px;font-weight:600;color:#fff;
+    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:9px;padding:6px 12px;transition:.15s}
+  .lv-edit:hover{background:rgba(255,255,255,.2)}
+  .lv-stats{flex:1;min-width:260px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .lv-cell{background:var(--parchment);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .lv-cell .c-k{font-size:11.5px;color:var(--text-soft)}
+  .lv-cell .c-v{font-family:'Cairo',sans-serif;font-weight:800;font-size:21px;line-height:1.2;color:var(--ink-800)}
+  .lv-cell .c-v.teal{color:var(--teal)} .lv-cell .c-v.clay{color:var(--clay)}
+  .lv-cell .c-u{font-size:11px;color:var(--text-soft)}
+
+  .lv-track{padding:0 20px 8px}
+  .lv-progress{height:11px;border-radius:7px;background:var(--parchment-2);overflow:hidden;margin-bottom:12px}
+  .lv-progress i{display:block;height:100%;border-radius:7px;transition:width .5s ease}
+  .lv-status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:10px 13px;border-radius:11px;line-height:1.5}
+  .lv-status svg{width:17px;height:17px;flex:none}
+  .lv-status.ok{color:var(--teal);background:rgba(46,125,110,.09);border:1px solid rgba(46,125,110,.2)}
+  .lv-status.over{color:var(--clay);background:rgba(181,86,63,.09);border:1px solid rgba(181,86,63,.2)}
+
+  .lv-today{display:flex;align-items:center;gap:10px;padding:14px 20px;margin-top:6px;
+    border-top:1px solid var(--line);flex-wrap:wrap}
+  .lv-today-label{font-weight:600;font-size:13.5px;color:var(--text)}
+  .lv-today input{width:120px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;
+    background:var(--parchment);font-size:14px;font-family:inherit;text-align:center}
+  .lv-today input:focus{outline:none;border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(201,161,74,.13)}
+  .lv-cur{font-size:13px;color:var(--text-soft)}
+  .lv-save{background:linear-gradient(150deg,var(--ink-700),var(--ink-800));color:#fff;font-weight:700;
+    font-size:13.5px;border-radius:10px;padding:10px 16px;transition:.15s}
+  .lv-save:hover{transform:translateY(-1px)}
+
+  .lv-days-head{padding:6px 20px 4px;font-size:12.5px;color:var(--text-soft)}
+  .lv-days{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px;padding:8px 20px 22px}
+  .lv-day{position:relative;background:var(--parchment);border:1px solid var(--line);border-radius:11px;
+    padding:7px 8px 8px;display:flex;flex-direction:column;gap:4px;transition:.15s}
+  .lv-day.has-val{border-color:var(--gold-soft);background:#fff}
+  .lv-day.is-today{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,161,74,.18)}
+  .lv-day .d-num{font-size:11px;color:var(--text-soft);font-weight:700}
+  .lv-day input{width:100%;border:none;background:transparent;font-family:'Cairo',sans-serif;
+    font-weight:700;font-size:14px;color:var(--ink-800);text-align:center;padding:2px 0}
+  .lv-day input:focus{outline:none}
+  .lv-day input::placeholder{color:var(--line);font-weight:400}
+  @media(max-width:560px){.lv-summary{flex-direction:column}.lv-stats{min-width:0}.lv-days{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}}
+
+  /* ---------- Add expense + transactions ---------- */
+  .addbar{display:grid;grid-template-columns:1.1fr 1.4fr 1fr 1fr auto;gap:10px;
+    padding:16px 20px;border-bottom:1px solid var(--line);align-items:end}
+  .field label{display:block;font-size:11.5px;color:var(--text-soft);margin-bottom:5px;font-weight:600}
+  .field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--parchment);font-size:13.5px;color:var(--text);transition:.15s}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--gold);
+    background:#fff;box-shadow:0 0 0 3px rgba(201,161,74,.13)}
+  .add-btn{background:linear-gradient(150deg,var(--ink-700),var(--ink-800));color:#fff;
+    font-weight:700;font-size:14px;border-radius:11px;padding:11px 18px;height:40px;
+    display:inline-flex;align-items:center;gap:7px;white-space:nowrap;transition:.15s;
+    box-shadow:0 6px 16px rgba(14,36,64,.25)}
+  .add-btn:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(14,36,64,.32)}
+  .add-btn:active{transform:translateY(0)}
+  .add-btn svg{width:16px;height:16px}
+
+  .exp-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:13px 20px;border-top:1px solid var(--line);background:var(--parchment);
+    flex-wrap:wrap}
+  .exp-count{font-size:13px;font-weight:700;color:var(--ink-700)}
+  .exp-total{font-size:13px;color:var(--text-soft)}
+  .exp-total b{color:var(--text);font-weight:800;font-family:'Cairo',sans-serif;font-size:15px}
+
+  .tx-list{padding:6px 20px 4px}
+  .tx{display:flex;align-items:center;gap:13px;padding:13px 8px;margin:0 -8px;border-radius:12px;
+    border-bottom:1px solid var(--parchment-2)}
+  .tx:last-child{border-bottom:none}
+  .tx .tag{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none;
+    font-size:15px;font-weight:700;color:#fff}
+  .tx .info{flex:1;min-width:0}
+  .tx .info .n{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tx .info .m{font-size:12px;color:var(--text-soft);display:flex;gap:8px;flex-wrap:wrap}
+  .tx .amt{font-family:'Cairo',sans-serif;font-weight:800;font-size:15.5px}
+  .tx .del{width:30px;height:30px;border-radius:8px;color:var(--text-soft);display:grid;place-items:center;
+    opacity:0;transition:.15s}
+  .tx:hover .del{opacity:1}
+  .tx .del:hover{background:rgba(181,86,63,.12);color:var(--clay)}
+  .tx .del svg{width:15px;height:15px}
+  @keyframes flashTx{0%{background:rgba(201,161,74,.30)}100%{background:transparent}}
+  .tx.flash-tx{animation:flashTx 1.7s ease}
+  .empty{text-align:center;color:var(--text-soft);padding:44px 20px;font-size:14px}
+  .empty svg{width:40px;height:40px;color:var(--line);margin-bottom:10px}
+
+  footer.foot{text-align:center;margin-top:34px;font-size:12px;color:var(--text-soft)}
+  footer.foot b{color:var(--gold-deep)}
+
+  /* ---------- Modal ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(8,23,38,.5);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .overlay.show{display:flex}
+  .modal{background:var(--card);border-radius:20px;width:100%;max-width:440px;
+    box-shadow:0 30px 80px rgba(8,23,38,.4);overflow:hidden;animation:pop .2s ease}
+  @keyframes pop{from{transform:translateY(12px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+  .modal-head{padding:20px 22px 0}
+  .modal-head h3{font-family:'Cairo',sans-serif;font-size:18px;font-weight:800}
+  .modal-head p{font-size:13px;color:var(--text-soft);margin-top:4px}
+  .modal-body{padding:18px 22px 6px}
+  .modal-body .field{margin-bottom:14px}
+  .modal-foot{display:flex;gap:10px;padding:8px 22px 22px}
+  .modal-foot button{flex:1;padding:12px;border-radius:12px;font-weight:700;font-size:14px;transition:.15s}
+  .btn-primary{background:var(--ink-800);color:#fff}
+  .btn-primary:hover{background:var(--ink-700)}
+  .btn-cancel{background:var(--parchment-2);color:var(--text)}
+  .btn-cancel:hover{background:var(--line)}
+  .btn-danger{background:rgba(181,86,63,.12);color:var(--clay)}
+  .btn-danger:hover{background:rgba(181,86,63,.2)}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink-800);color:#fff;padding:12px 20px;border-radius:12px;font-size:13.5px;
+    font-weight:600;box-shadow:0 12px 30px rgba(8,23,38,.35);opacity:0;pointer-events:none;
+    transition:.25s;z-index:60;display:flex;align-items:center;gap:9px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast svg{width:17px;height:17px;color:var(--gold-soft)}
+
+  /* ---------- Responsive ---------- */
+  @media(max-width:920px){
+    .grid{grid-template-columns:1fr}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .salary-amount{font-size:38px}
+    .addbar{grid-template-columns:1fr 1fr;}
+    .addbar .add-btn{grid-column:1/-1;justify-content:center}
+  }
+  @media(max-width:560px){
+    .wrap{padding:14px 12px 60px}
+    .topbar{flex-wrap:wrap}
+    .kpis{grid-template-columns:1fr 1fr;gap:10px}
+    .hero{padding:24px 22px}
+    .salary-amount{font-size:34px}
+    .hero-top{flex-direction:column}
+    .hero-mini{text-align:right}
+    .addbar{grid-template-columns:1fr}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ---------- معيار الالتزام (adherence) ---------- */
+  .adh-top{display:flex;gap:16px;padding:18px 20px 6px;flex-wrap:wrap;align-items:stretch}
+  .adh-rate{flex:0 0 auto;min-width:170px;border-radius:16px;padding:16px 20px;
+    display:flex;flex-direction:column;justify-content:center;text-align:center}
+  .adh-rate.ok{background:rgba(46,125,110,.12);color:var(--teal)}
+  .adh-rate.warn{background:rgba(201,161,74,.14);color:var(--gold-deep)}
+  .adh-rate.bad{background:rgba(181,86,63,.12);color:var(--clay)}
+  .adh-rate .ar-num{font-family:'Cairo',sans-serif;font-size:40px;font-weight:800;line-height:1}
+  .adh-rate .ar-num span{font-size:18px}
+  .adh-rate .ar-k{font-size:12px;color:var(--text-soft);margin-top:5px}
+  .adh-mini{flex:1;min-width:240px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .am-cell{background:var(--parchment);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;
+    display:flex;flex-direction:column;justify-content:center}
+  .am-v{font-family:'Cairo',sans-serif;font-weight:800;font-size:24px;line-height:1.1}
+  .am-v.teal{color:var(--teal)} .am-v.clay{color:var(--clay)}
+  .am-k{font-size:11.5px;color:var(--text-soft);margin-top:3px}
+  .adh-chart{display:block;padding:12px 16px 4px;max-height:220px}
+  .adh-list-head{padding:8px 20px 6px;font-size:13px;font-weight:700;color:var(--ink-700)}
+  .adh-list{padding:0 20px 22px;display:flex;flex-direction:column;gap:8px}
+  .adh-breach{display:flex;align-items:center;gap:12px;background:rgba(181,86,63,.07);
+    border:1px solid rgba(181,86,63,.2);border-radius:11px;padding:10px 14px}
+  .adh-breach .ab-day{flex:1;font-weight:600;font-size:13.5px;color:var(--text)}
+  .adh-breach .ab-amt{font-weight:800;font-family:'Cairo',sans-serif;color:var(--clay)}
+  .adh-breach .ab-pct{font-size:12px;font-weight:700;color:#fff;background:var(--clay);padding:3px 9px;border-radius:7px}
+  .adh-clean{display:flex;align-items:center;gap:9px;background:rgba(46,125,110,.08);
+    border:1px solid rgba(46,125,110,.22);border-radius:11px;padding:13px 15px;color:var(--teal);font-weight:600;font-size:13.5px}
+  .adh-empty{text-align:center;color:var(--text-soft);font-size:13.5px;padding:36px 20px}
+  @media(max-width:560px){.adh-top{flex-direction:column}.adh-mini{min-width:0}}
+
+  /* ---------- العجز اليومي وعلاجه (deficit) ---------- */
+  .df-top{display:flex;gap:14px;padding:18px 20px 6px;flex-wrap:wrap}
+  .df-stat{flex:1;min-width:150px;border:1px solid var(--line);border-radius:14px;padding:15px 16px;background:var(--parchment)}
+  .df-stat.bad{background:rgba(181,86,63,.09);border-color:rgba(181,86,63,.25)}
+  .df-stat.good{background:rgba(46,125,110,.09);border-color:rgba(46,125,110,.25)}
+  .df-k{font-size:12px;color:var(--text-soft)}
+  .df-v{font-family:'Cairo',sans-serif;font-weight:800;font-size:26px;line-height:1.15;margin-top:3px;color:var(--ink-800)}
+  .df-v.clay{color:var(--clay)} .df-v.teal{color:var(--teal)}
+  .df-u{font-size:11.5px;color:var(--text-soft)}
+  .df-cure{margin:14px 20px 6px;border-radius:14px;padding:16px 18px;display:flex;gap:13px;align-items:flex-start}
+  .df-cure.bad{background:linear-gradient(160deg,rgba(181,86,63,.12),rgba(181,86,63,.04));border:1px solid rgba(181,86,63,.25)}
+  .df-cure.good{background:linear-gradient(160deg,rgba(46,125,110,.12),rgba(46,125,110,.04));border:1px solid rgba(46,125,110,.25)}
+  .df-cure .ic{width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center}
+  .df-cure.bad .ic{background:rgba(181,86,63,.16);color:var(--clay)}
+  .df-cure.good .ic{background:rgba(46,125,110,.16);color:var(--teal)}
+  .df-cure .ic svg{width:20px;height:20px}
+  .df-cure .ct{flex:1}
+  .df-cure .ct .t{font-family:'Cairo',sans-serif;font-weight:800;font-size:15px;margin-bottom:5px}
+  .df-cure.bad .ct .t{color:var(--clay)} .df-cure.good .ct .t{color:var(--teal)}
+  .df-cure .ct p{font-size:13px;color:var(--text);line-height:1.7}
+  .df-cure .ct b{font-family:'Cairo',sans-serif}
+  .df-compare{display:flex;gap:10px;padding:10px 20px 22px;flex-wrap:wrap}
+  .df-bar{flex:1;min-width:160px;background:var(--parchment);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .df-bar .bk{font-size:12px;color:var(--text-soft);margin-bottom:8px;display:flex;justify-content:space-between}
+  .df-bar .bk b{color:var(--text);font-family:'Cairo',sans-serif}
+  .df-track{height:9px;border-radius:6px;background:var(--parchment-2);overflow:hidden}
+  .df-track i{display:block;height:100%;border-radius:6px}
+  .df-empty{text-align:center;color:var(--text-soft);font-size:13.5px;padding:36px 20px}
+  @media(max-width:560px){.df-top{flex-direction:column}}
+
+  /* ---------- السحوبات الطارئة (emergency) ---------- */
+  .cat-wd, .si-wd{font-size:11px;color:var(--clay);font-weight:600}
+  .em-form{display:grid;grid-template-columns:1.2fr 0.9fr 1.4fr auto;gap:10px;padding:16px 20px;align-items:end}
+  .em-form .field label{display:block;font-size:11.5px;color:var(--text-soft);margin-bottom:5px;font-weight:600}
+  .em-form .field input,.em-form .field select{width:100%;padding:10px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--parchment);font-size:13.5px;color:var(--text);font-family:inherit;transition:.15s}
+  .em-form .field input:focus,.em-form .field select:focus{outline:none;border-color:var(--clay);
+    background:#fff;box-shadow:0 0 0 3px rgba(181,86,63,.12)}
+  .em-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 20px;border-top:1px solid var(--line);background:var(--parchment);flex-wrap:wrap}
+  .em-count{font-size:13px;font-weight:700;color:var(--ink-700)}
+  .em-total{font-size:13px;color:var(--text-soft)}
+  .em-total b{color:var(--clay);font-weight:800;font-family:'Cairo',sans-serif;font-size:15px}
+  .em-list{padding:8px 20px 20px;display:flex;flex-direction:column;gap:8px}
+  .em-item{display:flex;align-items:center;gap:12px;background:var(--parchment);
+    border:1px solid var(--line);border-radius:11px;padding:10px 13px;flex-wrap:wrap}
+  .ei-src{font-weight:700;font-size:13px;color:var(--ink-800);background:rgba(138,51,36,.10);
+    padding:3px 10px;border-radius:7px}
+  .ei-note{flex:1;min-width:80px;font-size:13px;color:var(--text)}
+  .ei-date{font-size:11.5px;color:var(--text-soft)}
+  .ei-amt{font-weight:800;font-family:'Cairo',sans-serif;color:var(--clay)}
+  .ei-del{width:26px;height:26px;border-radius:7px;color:var(--text-soft);display:grid;place-items:center;flex:none;transition:.15s}
+  .ei-del svg{width:14px;height:14px}
+  .ei-del:hover{background:rgba(181,86,63,.12);color:var(--clay)}
+  .em-empty{text-align:center;color:var(--text-soft);font-size:13.5px;padding:30px 20px}
+  @media(max-width:680px){.em-form{grid-template-columns:1fr 1fr}.em-form .add-btn{grid-column:1/-1;justify-content:center}}
+  @media(max-width:480px){.em-form{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 7l9-4 9 4M5 9v8m14-8v8M3 17l9 4 9-4" stroke="#D9B978" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7v10" stroke="#C9A14A" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <h1>رَصيد</h1>
+        <p>إدارة الراتب والمصروفات الشهرية</p>
+      </div>
+    </div>
+    <div class="month-nav">
+      <button id="prevMonth" title="الشهر السابق"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+      <span class="label" id="monthLabel">—</span>
+      <button id="nextMonth" title="الشهر التالي"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    </div>
+    <button class="ghost-btn" id="settingsBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      الإعدادات
+    </button>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-label">الراتب الشهري</div>
+        <div class="salary-row">
+          <span class="salary-amount num" id="salaryAmt">0</span>
+          <span class="salary-cur">ر.س</span>
+        </div>
+        <button class="edit-salary" id="editSalary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          تعديل الراتب
+        </button>
+      </div>
+      <div class="hero-mini">
+        <div class="v pos num" id="heroRemaining">0</div>
+        <div class="k">المتبقي غير الموزّع<br><span style="opacity:.7">بعد الفئات والادخار والاستثمار</span></div>
+      </div>
+    </div>
+
+    <!-- signature ribbon -->
+    <div class="ribbon-wrap">
+      <div class="ribbon-head">
+        <span>تقسيم الراتب (الفئات + الادخار + الاستثمار)</span>
+        <span id="ribbonNote">—</span>
+      </div>
+      <div class="ribbon" id="ribbon"></div>
+      <div class="ribbon-legend" id="ribbonLegend"></div>
+    </div>
+  </section>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="ico i-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+      <div class="k">الدخل الشهري</div>
+      <div class="v num" id="kIncome">0</div>
+      <small>ريال سعودي</small>
+    </div>
+    <div class="kpi">
+      <div class="ico i-ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-5"/></svg></div>
+      <div class="k">الموزّع من الراتب</div>
+      <div class="v num" id="kBudget">0</div>
+      <small id="kBudgetPct">ميزانيات + ادخار + استثمار</small>
+    </div>
+    <div class="kpi">
+      <div class="ico i-clay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8L2 22"/><path d="M17.5 15H9V6.5"/><circle cx="12" cy="12" r="9"/></svg></div>
+      <div class="k">المصروف الفعلي</div>
+      <div class="v clay num" id="kSpent">0</div>
+      <small id="kSpentPct">ما صُرف من الميزانيات</small>
+    </div>
+    <div class="kpi">
+      <div class="ico i-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></div>
+      <div class="k">المتبقي غير الموزّع</div>
+      <div class="v teal num" id="kRemaining">0</div>
+      <small id="kRemainingPct">غير موزّع بعد</small>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="grid">
+    <!-- Categories -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> الفئات والميزانيات</h2>
+        <span class="sub">المصروف مقابل المخصّص</span>
+      </div>
+      <div class="panel-body" id="catList"></div>
+    </section>
+
+    <!-- Right column: donut + daily pace -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg> أين يذهب مالك؟</h2>
+        <span class="sub">كل ريال من راتبك</span>
+      </div>
+      <div class="panel-body">
+        <div class="donut-box" id="donutBox"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Savings & Investment -->
+  <section class="panel" style="margin-top:20px">
+    <div class="panel-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> المدخرات والاستثمار</h2>
+      <span class="sub">المخصّص الشهري يُخصم من المتبقي</span>
+    </div>
+    <div class="si-grid" id="siGrid"></div>
+  </section>
+
+  <!-- المصروف الشهري (الأكل والشرب والبنزين) — مخصص + متابعة يومية -->
+  <section class="panel" id="livingPanel" style="margin-top:20px">
+    <div class="panel-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h2a2 2 0 0 0 2-2V2M6 2v9M16 2c-1.5 0-3 1.5-3 4v5h3m0-9v18"/></svg> المصروف الشهري — الأكل والشرب والبنزين</h2>
+      <span class="sub">مخصّص شهري ومتابعة يومية</span>
+    </div>
+    <div id="livingBox"></div>
+  </section>
+
+  <!-- معيار الالتزام بحد الصرف اليومي (إضافة جديدة) -->
+  <section class="panel" id="adherencePanel" style="margin-top:20px">
+    <div class="panel-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 4-6"/><path d="M3 11h18" stroke-dasharray="3 3" opacity=".5"/></svg> معيار الالتزام بحد الصرف اليومي</h2>
+      <span class="sub">مدى التزامك ومتى تجاوزت الحد</span>
+    </div>
+    <div id="adherenceBox"></div>
+  </section>
+
+  <!-- العجز اليومي وعلاجه (إضافة جديدة) -->
+  <section class="panel" id="deficitPanel" style="margin-top:20px">
+    <div class="panel-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 2L9 5M12 2l3 3"/><path d="M5 12l-3 0M19 12l3 0"/><circle cx="12" cy="14" r="7"/><path d="M12 11v3l2 1"/></svg> العجز اليومي وعلاجه</h2>
+      <span class="sub">مقدار تجاوزك للحد اليومي وكيفية تعويضه</span>
+    </div>
+    <div id="deficitBox"></div>
+  </section>
+
+  <!-- السحوبات الطارئة -->
+  <section class="panel" id="emergencyPanel" style="margin-top:20px">
+    <div class="panel-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><path d="M16 2h6v6"/><path d="M22 2l-7 7"/></svg> السحوبات الطارئة</h2>
+      <span class="sub">سحب غير معتاد من أحد المخصّصات — يُخصم من مصدره وينعكس على كل الأرقام</span>
+    </div>
+    <div id="emergencyBox"></div>
+  </section>
+
+  <footer class="foot">
+    صُمّم بنظام ألوان <b>الحبر البحري والذهب الصحراوي</b> · بياناتك محفوظة تلقائيًا على جهازك
+  </footer>
+</div>
+
+<!-- Generic modal -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+<script>
+/* ============================================================
+   رَصيد — Personal salary & expense manager (self-contained)
+   Storage: window.storage (Claude artifact) → localStorage fallback
+   ============================================================ */
+
+const KEY = 'raseed:state:v2';
+
+/* ---- storage layer ---- */
+const Store = {
+  async get(k){
+    try{
+      if (typeof window !== 'undefined' && window.storage && window.storage.get){
+        const r = await window.storage.get(k);
+        return r ? r.value : null;
+      }
+    }catch(e){}
+    try{ return localStorage.getItem(k); }catch(e){ return null; }
+  },
+  async set(k,v){
+    try{
+      if (typeof window !== 'undefined' && window.storage && window.storage.set){
+        await window.storage.set(k,v); return;
+      }
+    }catch(e){}
+    try{ localStorage.setItem(k,v); }catch(e){}
+  }
+};
+
+/* ---- on-brand palette for categories ---- */
+const PALETTE = ['#143257','#1C4E6B','#2E7D6E','#C9A14A','#A8763C','#7A8B99','#6B7E6A','#3E9C89','#B5563F','#D9B978'];
+
+/* ---- default seed ---- */
+function seedState(){
+  const m = monthKey(new Date());
+  return {
+    salary: 12000,
+    currentMonth: m,
+    savings: { name:'صندوق الطوارئ', balance:5000, monthly:2000, goal:30000 },
+    investment: { entity:'صندوق مؤشرات', total:0, monthly:1000 },
+    living: { monthly: 3000 },   // المصروف الشهري: الأكل والشرب والبنزين
+    categories: [
+      { id:'c1', name:'السكن والإيجار',     group:'أساسيات', budget:3500, color:'#143257' },
+      { id:'c2', name:'الفواتير والخدمات',   group:'أساسيات', budget:700,  color:'#1C4E6B' },
+      { id:'c3', name:'مصروف الوالدين',      group:'أساسيات', budget:800,  color:'#2E7D6E' },
+      { id:'c4', name:'أقساط والتزامات',     group:'أساسيات', budget:400,  color:'#A8763C' },
+    ],
+    months: {}
+  };
+}
+
+let S = null;
+
+/* ---- helpers ---- */
+function monthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function fmt(n){ return Math.round(n||0).toLocaleString('en-US'); }
+function monthName(key){
+  const [y,m] = key.split('-').map(Number);
+  const names = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  return names[m-1] + ' ' + y;
+}
+function expensesOf(monthK){ return (S.months[monthK] && S.months[monthK].expenses) || []; }
+function catById(id){ return S.categories.find(c=>c.id===id); }
+
+async function save(){ await Store.set(KEY, JSON.stringify(S)); }
+
+/* ============================================================
+   النموذج الحسابي (تقسيم الراتب):
+   - كل فئة "تحجز" مبلغها المخصّص (الميزانية). إن تجاوز صرفها الميزانية
+     يُحتسب الصرف الفعلي.  →  المحجوز للفئة = أكبر(الميزانية، المصروف).
+   - "مدفوع بالكامل": يجعل المصروف الفعلي للفئة = ميزانيتها (للبنود الثابتة
+     كالإيجار ومصروف الوالدين) دون إدخالها كمعاملات. لا يغيّر المتبقي لأن
+     الميزانية محجوزة أصلًا، لكنه يرفع "المصروف الفعلي" ويملأ شريط الفئة.
+   - الموزّع من الراتب = مجموع المحجوز للفئات + المخصّص الشهري للادخار + للاستثمار.
+   - المتبقي غير الموزّع = الراتب − الموزّع.
+   ============================================================ */
+function paidMap(){ const m=S.months[S.currentMonth]; return (m&&m.paid)||{}; }
+function isPaid(catId){ return !!paidMap()[catId]; }
+
+/* daily living entries for current month: { 'YYYY-MM-DD': amount } */
+function livingDaily(){ const m=S.months[S.currentMonth]; return (m&&m.living)||{}; }
+function livingSpentTotal(){ const d=livingDaily(); return Object.values(d).reduce((a,v)=>a+(+v||0),0); }
+function setLivingDay(dateStr, amount){
+  const m=S.currentMonth;
+  if(!S.months[m]) S.months[m]={};
+  if(!S.months[m].living) S.months[m].living={};
+  if(amount>0) S.months[m].living[dateStr]=amount; else delete S.months[m].living[dateStr];
+  save();
+}
+
+/* ---- السحوبات الطارئة (غير المعتادة) لهذا الشهر ---- */
+function withdrawalsList(){ const m=S.months[S.currentMonth]; return (m&&m.withdrawals)||[]; }
+function withdrawalSums(){
+  const w = { savings:0, investment:0, living:0, unallocated:0, cats:{} , catsTotal:0 };
+  withdrawalsList().forEach(x=>{
+    const a = +x.amount||0;
+    if (x.source && x.source.indexOf('cat:')===0){
+      const id = x.source.slice(4);
+      w.cats[id] = (w.cats[id]||0)+a; w.catsTotal += a;
+    } else if (w[x.source]!=null){ w[x.source]+=a; }
+  });
+  return w;
+}
+function effLivingMonthly(){
+  return Math.max(((S.living&&S.living.monthly)||0) - withdrawalSums().living, 0);
+}
+function addWithdrawal(source, amount, note){
+  const m=S.currentMonth;
+  if(!S.months[m]) S.months[m]={};
+  if(!S.months[m].withdrawals) S.months[m].withdrawals=[];
+  S.months[m].withdrawals.push({ id:Date.now(), source, amount, note:note||'', date:todayISO() });
+  save(); render();
+}
+function deleteWithdrawal(id){
+  const m=S.currentMonth;
+  if(!S.months[m]||!S.months[m].withdrawals) return;
+  S.months[m].withdrawals = S.months[m].withdrawals.filter(x=>x.id!==id);
+  save(); render();
+}
+
+function computeMonth(){
+  const pm = paidMap();
+  const w  = withdrawalSums();
+  let fixedBudget=0, paidFixed=0, fixedBudgetEff=0;
+  S.categories.forEach(c=>{
+    const b = c.budget||0;
+    const eff = Math.max(b - (w.cats[c.id]||0), 0);   // الميزانية بعد السحب الطارئ
+    fixedBudget += b;
+    fixedBudgetEff += eff;
+    if (pm[c.id]) paidFixed += eff;
+  });
+  const livingMonthlyBase = (S.living && S.living.monthly) || 0;
+  const livingMonthly = Math.max(livingMonthlyBase - w.living, 0);   // المصروف بعد السحب الطارئ
+  const livingSpent   = livingSpentTotal();
+  const savM = (S.savings && S.savings.monthly) || 0;
+  const invM = (S.investment && S.investment.monthly) || 0;
+  const emergency = w.living + w.unallocated + w.catsTotal;          // طارئ من مخصّصات هذا الشهر
+  const totalEmergency = emergency + w.savings + w.investment;       // كل السحوبات الطارئة
+  const allocated = fixedBudgetEff + livingMonthly + savM + invM + emergency;
+  return { fixedBudget:fixedBudgetEff, fixedBudgetFull:fixedBudget, paidFixed,
+           livingMonthly, livingMonthlyBase, livingSpent, savM, invM,
+           allocated, emergency, totalEmergency, w };
+}
+
+/* ---- toggle "paid in full" for a category this month ---- */
+function togglePaid(catId, checked){
+  const m = S.currentMonth;
+  if(!S.months[m]) S.months[m]={};
+  if(!S.months[m].paid) S.months[m].paid={};
+  if(checked) S.months[m].paid[catId]=true; else delete S.months[m].paid[catId];
+  save(); render();
+  toast(checked?'تم تعليم الفئة كمدفوعة':'تم إلغاء الدفع');
+}
+
+/* ---- days helpers ---- */
+function monthDays(key){ const [y,m]=key.split('-').map(Number); return new Date(y,m,0).getDate(); }
+function daysElapsed(key){
+  const today=new Date(); const cur=monthKey(today);
+  if(key<cur) return monthDays(key);
+  if(key>cur) return 1;
+  return today.getDate();
+}
+
+/* ---- core render ---- */
+function render(){
+  const m = S.currentMonth;
+  const income = S.salary || 0;
+
+  const M = computeMonth();
+  const remaining   = income - M.allocated;                       // غير الموزّع
+  const actualSpent = M.paidFixed + M.livingSpent + M.totalEmergency; // فعلي + سحوبات طارئة
+
+  const ctx = Object.assign({ income, remaining, actualSpent }, M);
+
+  // hero
+  document.getElementById('salaryAmt').textContent = fmt(income);
+  const hr = document.getElementById('heroRemaining');
+  hr.textContent = fmt(remaining);
+  hr.className = 'v num ' + (remaining>=0?'pos':'neg');
+  document.getElementById('monthLabel').textContent = monthName(m);
+
+  // KPIs
+  document.getElementById('kIncome').textContent   = fmt(income);
+  document.getElementById('kBudget').textContent   = fmt(M.allocated);
+  document.getElementById('kBudgetPct').textContent= income? Math.round(M.allocated/income*100)+'% من الراتب':'—';
+  document.getElementById('kSpent').textContent    = fmt(actualSpent);
+  document.getElementById('kSpentPct').textContent = income? Math.round(actualSpent/income*100)+'% من الراتب':'—';
+  const kr = document.getElementById('kRemaining');
+  kr.textContent = fmt(remaining);
+  kr.className = 'v num ' + (remaining>=0?'teal':'clay');
+  document.getElementById('kRemainingPct').textContent = remaining>=0?'غير موزّع بعد':'تجاوزت راتبك';
+
+  renderRibbon(ctx);
+  renderCategories(ctx);
+  renderDonut(ctx);
+  renderLiving(ctx);
+  renderSavingsInvestment();
+  if (typeof renderEmergency==='function') renderEmergency(ctx);
+}
+
+/* ---- ribbon: full salary division ---- */
+function renderRibbon(ctx){
+  const { income, fixedBudget, livingMonthly, savM, invM, allocated } = ctx;
+  const ribbon = document.getElementById('ribbon');
+  const legend = document.getElementById('ribbonLegend');
+  ribbon.innerHTML=''; legend.innerHTML='';
+  const base = Math.max(income, allocated) || 1;
+
+  const addSeg = (w, color, title)=>{
+    if (w<=0) return;
+    const seg = document.createElement('span');
+    seg.style.width = (w/base*100)+'%';
+    seg.style.background = color;
+    seg.title = title;
+    ribbon.appendChild(seg);
+  };
+
+  const w = ctx.w || {cats:{}};
+  S.categories.forEach(c=>{ const eff=Math.max((c.budget||0)-((w.cats&&w.cats[c.id])||0),0); addSeg(eff, c.color, c.name+' · '+fmt(eff)+' ر.س'); });
+  addSeg(livingMonthly, '#B5563F', 'المصروف الشهري · '+fmt(livingMonthly)+' ر.س');
+  addSeg(savM, '#C9A14A', 'ادخار · '+fmt(savM)+' ر.س');
+  addSeg(invM, '#2E7D6E', 'استثمار · '+fmt(invM)+' ر.س');
+  if (ctx.emergency>0) addSeg(ctx.emergency, '#8A3324', 'سحب طارئ · '+fmt(ctx.emergency)+' ر.س');
+  const unalloc = income - allocated;
+  if (unalloc > 0) addSeg(unalloc, 'rgba(255,255,255,.14)', 'غير موزّع · '+fmt(unalloc)+' ر.س');
+
+  const items = [
+    {label:'الفئات الثابتة', val:fixedBudget,   color:'#1C4E6B'},
+    {label:'المصروف الشهري', val:livingMonthly,  color:'#B5563F'},
+    {label:'ادخار',          val:savM,           color:'#C9A14A'},
+    {label:'استثمار',        val:invM,           color:'#2E7D6E'},
+    {label:'سحب طارئ',       val:ctx.emergency||0, color:'#8A3324'},
+    {label:'غير موزّع',      val:Math.max(unalloc,0), color:'rgba(255,255,255,.4)'},
+  ];
+  items.forEach(it=>{
+    if (it.val<=0 && it.label!=='غير موزّع') return;
+    const pct = income? Math.round(it.val/income*100):0;
+    const el = document.createElement('div'); el.className='lg';
+    el.innerHTML = `<span class="dot" style="background:${it.color}"></span>${it.label} <b>${pct}%</b> · ${fmt(it.val)} ر.س`;
+    legend.appendChild(el);
+  });
+
+  document.getElementById('ribbonNote').textContent =
+    income ? (Math.round(allocated/income*100)+'% موزّع من الراتب') : 'أدخل راتبك أولًا';
+}
+
+/* ---- categories with spent/budget bars ---- */
+function renderCategories(ctx){
+  const wrap = document.getElementById('catList');
+  wrap.innerHTML='';
+
+  const w = (ctx && ctx.w) || {cats:{}};
+  S.categories.forEach(c=>{
+    const paid   = isPaid(c.id);
+    const budget = c.budget||0;
+    const wc     = (w.cats && w.cats[c.id]) || 0;
+    const effBudget = Math.max(budget - wc, 0);
+
+    const row = document.createElement('div'); row.className='cat'+(paid?' is-paid':'');
+    row.setAttribute('data-catrow', c.id);
+    row.innerHTML = `
+      <div class="cat-top">
+        <div class="cat-name">
+          <span class="swatch" style="background:${c.color}"></span>
+          ${c.name}<span class="grp">${c.group}</span>
+          ${paid?'<span class="paid-badge">مدفوع</span>':''}
+        </div>
+        <div class="cat-vals">
+          <b class="num">${fmt(effBudget)}</b> ر.س${wc>0?` <span class="cat-wd">(−${fmt(wc)} سحب)</span>`:''}
+        </div>
+      </div>
+      <div class="bar"><i style="width:${paid?100:0}%;background:${paid?'var(--teal)':c.color}"></i></div>
+      <div class="cat-foot">
+        <div class="cat-foot-r">
+          <label class="paid-toggle" title="تعليم البند كمدفوع فعليًا هذا الشهر">
+            <input type="checkbox" data-paid="${c.id}" ${paid?'checked':''}>
+            <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>
+            تم الدفع
+          </label>
+          <span class="cat-pct ${paid?'paid':''}">${paid?'مدفوع بالكامل':'محجوز — لم يُدفع بعد'}</span>
+        </div>
+        <div class="cat-actions">
+          <button class="edit-budget" data-cat="${c.id}">تعديل المبلغ</button>
+          <button class="del-cat" data-del="${c.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>حذف</button>
+        </div>
+      </div>`;
+    wrap.appendChild(row);
+  });
+
+  wrap.querySelectorAll('.edit-budget').forEach(b=>{ b.onclick = ()=> editBudget(b.dataset.cat); });
+  wrap.querySelectorAll('.del-cat').forEach(b=>{ b.onclick = ()=> deleteCategory(b.dataset.del); });
+  wrap.querySelectorAll('input[data-paid]').forEach(chk=>{ chk.onchange = ()=> togglePaid(chk.dataset.paid, chk.checked); });
+}
+
+/* ---- donut: where your money actually went this month ---- */
+function renderDonut(ctx){
+  const box = document.getElementById('donutBox');
+  const { income, livingMonthly, savM, invM, allocated } = ctx;
+  const w = ctx.w || {cats:{}};
+
+  // every riyal of the salary, accounted for
+  const data = S.categories
+    .map(c=>({name:c.name, color:c.color, value:Math.max((c.budget||0)-((w.cats&&w.cats[c.id])||0),0)}))
+    .filter(d=>d.value>0)
+    .sort((a,b)=>b.value-a.value);
+  if (livingMonthly>0) data.push({name:'المصروف الشهري', color:'#B5563F', value:livingMonthly});
+  if (savM>0) data.push({name:'ادخار',  color:'#C9A14A', value:savM});
+  if (invM>0) data.push({name:'استثمار', color:'#2E7D6E', value:invM});
+  if (ctx.emergency>0) data.push({name:'سحب طارئ', color:'#8A3324', value:ctx.emergency});
+  const unalloc = income - allocated;
+  if (unalloc>0) data.push({name:'غير موزّع', color:'#D9CFB8', value:unalloc});
+
+  const grandTotal = data.reduce((a,d)=>a+d.value,0);
+  if (!data.length || grandTotal<=0){
+    box.innerHTML = `<div class="donut-empty">أدخل راتبك وحدّد المخصّصات لترى أين يذهب كل ريال.</div>`;
+    return;
+  }
+
+  const r=70, c=2*Math.PI*r, cx=94, cy=94;
+  let offset=0; let arcs='';
+  data.forEach(d=>{
+    const len = (d.value/grandTotal)*c;
+    arcs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}"
+      stroke-width="22" stroke-dasharray="${len} ${c-len}" stroke-dashoffset="${-offset}"></circle>`;
+    offset += len;
+  });
+
+  let legend='';
+  data.forEach(d=>{
+    const pct = Math.round(d.value/grandTotal*100);
+    legend += `<div class="dl"><div class="l"><span class="dot" style="background:${d.color}"></span>${d.name}</div><div class="r"><span class="num">${fmt(d.value)}</span> ر.س · ${pct}%</div></div>`;
+  });
+
+  box.innerHTML = `
+    <div class="donut">
+      <svg width="188" height="188" viewBox="0 0 188 188">${arcs}</svg>
+      <div class="center"><div><div class="big num">${fmt(grandTotal)}</div><div class="small">إجمالي الراتب ر.س</div></div></div>
+    </div>
+    <div class="donut-legend">${legend}</div>`;
+}
+
+/* ---- المصروف الشهري: مخصّص + خانات يومية + معدّل ومتابعة ---- */
+function renderLiving(ctx){
+  const box = document.getElementById('livingBox');
+  if (!box) return;
+  const m = S.currentMonth;
+  const dim = monthDays(m);
+  const de  = Math.max(daysElapsed(m), 1);
+  const monthly = ctx.livingMonthly;
+  const daily   = livingDaily();
+  const spent   = ctx.livingSpent;
+  const remaining = monthly - spent;                 // المتبقي من المخصّص
+  const plannedDaily = monthly / dim;                // المعدّل اليومي المفترض
+  const expectedByNow = plannedDaily * de;
+  const onPlan = spent <= expectedByNow + 0.5;
+  const deficit = spent - expectedByNow;             // موجب = عجز/تجاوز، سالب = وفر
+  const dailyAvg = spent / de;
+  const projected = dailyAvg * dim;
+  const todayKey = todayISO();
+  const todaySpent = +daily[todayKey] || 0;
+  const usePct = monthly>0 ? Math.min(spent/monthly*100,100) : 0;
+
+  // summary header
+  let html = `
+    <div class="lv-summary">
+      <div class="lv-alloc">
+        <div class="lv-k">المخصّص الشهري</div>
+        <div class="lv-amt num">${fmt(monthly)} <span>ر.س</span></div>
+        <button class="lv-edit" id="editLiving">تعديل المخصّص</button>
+      </div>
+      <div class="lv-stats">
+        <div class="lv-cell"><div class="c-k">المعدّل اليومي المفترض</div><div class="c-v num">${fmt(plannedDaily)}</div><div class="c-u">ر.س / يوم</div></div>
+        <div class="lv-cell"><div class="c-k">صُرف حتى اليوم</div><div class="c-v num">${fmt(spent)}</div><div class="c-u">من ${fmt(monthly)}</div></div>
+        <div class="lv-cell"><div class="c-k">المتبقي من المخصّص</div><div class="c-v num ${remaining<0?'clay':'teal'}">${fmt(remaining)}</div><div class="c-u">ر.س</div></div>
+        <div class="lv-cell"><div class="c-k">${deficit>0?'العجز عن الخطة':'وفر عن الخطة'}</div><div class="c-v num ${deficit>0?'clay':'teal'}">${fmt(Math.abs(deficit))}</div><div class="c-u">حتى اليوم</div></div>
+      </div>
+    </div>
+    <div class="lv-track">
+      <div class="lv-progress"><i style="width:${usePct}%;background:${remaining<0?'var(--clay)':'var(--gold-deep)'}"></i></div>
+      <div class="lv-status ${onPlan?'ok':'over'}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${onPlan?'<path d="M20 6L9 17l-5-5"/>':'<path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/>'}</svg>
+        ${monthly<=0 ? 'حدّد المخصّص الشهري أولًا' :
+          onPlan ? ('ضمن الخطة — المفترض '+fmt(expectedByNow)+' ر.س خلال '+de+' يوم، وأنت أقل بـ '+fmt(Math.abs(deficit))+' ر.س')
+                 : ('تجاوزت المعدّل — المفترض '+fmt(expectedByNow)+' ر.س، وصرفت أكثر بـ '+fmt(deficit)+' ر.س')}
+      </div>
+    </div>`;
+
+  // today quick-entry
+  html += `
+    <div class="lv-today">
+      <div class="lv-today-label">صرف اليوم (${formatDate(todayKey)})</div>
+      <input type="number" id="livingToday" min="0" step="1" placeholder="0" value="${todaySpent||''}">
+      <span class="lv-cur">ر.س</span>
+      <button class="lv-save" id="saveLivingToday">حفظ صرف اليوم</button>
+    </div>`;
+
+  // per-day grid for the whole month
+  html += `<div class="lv-days-head">سجّل صرفك في كل يوم — يُحسب الباقي تلقائيًا</div><div class="lv-days">`;
+  const [yy,mm] = m.split('-').map(Number);
+  const todayDay = (monthKey(new Date())===m) ? new Date().getDate() : 0;
+  for (let d=1; d<=dim; d++){
+    const ds = m+'-'+String(d).padStart(2,'0');
+    const val = daily[ds] || '';
+    const isToday = d===todayDay;
+    html += `
+      <div class="lv-day ${isToday?'is-today':''} ${val?'has-val':''}">
+        <span class="d-num">${d}</span>
+        <input type="number" min="0" step="1" data-day="${ds}" value="${val}" placeholder="٠">
+      </div>`;
+  }
+  html += `</div>`;
+
+  box.innerHTML = html;
+
+  // wire events
+  const editBtn = document.getElementById('editLiving');
+  if (editBtn) editBtn.onclick = editLiving;
+
+  const todayInput = document.getElementById('livingToday');
+  const saveToday = document.getElementById('saveLivingToday');
+  if (saveToday) saveToday.onclick = ()=>{
+    const v = parseFloat(todayInput.value)||0;
+    setLivingDay(todayKey, v); render(); toast('تم حفظ صرف اليوم');
+  };
+  if (todayInput) todayInput.addEventListener('keydown', e=>{ if(e.key==='Enter') saveToday.click(); });
+
+  box.querySelectorAll('.lv-day input[data-day]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const v = parseFloat(inp.value)||0;
+      setLivingDay(inp.dataset.day, v); render();
+    });
+  });
+}
+
+/* ---- savings & investment boxes ---- */
+function renderSavingsInvestment(){
+  const grid = document.getElementById('siGrid');
+  const s = S.savings || {name:'المدخرات',balance:0,monthly:0,goal:0};
+  const v = S.investment || {entity:'',total:0,monthly:0};
+  const w = withdrawalSums();
+  const sBal = (s.balance||0) - w.savings;
+  const vTot = (v.total||0)   - w.investment;
+  const sPct = s.goal>0 ? Math.min(Math.round(sBal/s.goal*100),100) : 0;
+
+  grid.innerHTML = `
+    <div class="si-box">
+      <div class="si-head">
+        <div class="si-title">
+          <span class="si-ico sav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><circle cx="16" cy="9" r="0"/></svg></span>
+          <div><div class="si-name">المدخرات</div><div class="si-sub">${s.name||'صندوق ادخار'}</div></div>
+        </div>
+        <button class="si-edit" data-edit="savings">تعديل</button>
+      </div>
+      <div class="si-amount num">${fmt(sBal)} <span class="cur">ر.س</span></div>
+      <div class="si-label">إجمالي الرصيد المدخر الحالي${w.savings>0?` <span class="si-wd">(−${fmt(w.savings)} سحب طارئ)</span>`:''}</div>
+      <div class="si-rows">
+        <div class="si-r"><span>المخصّص الشهري للادخار</span><b class="num ${s.monthly>0?'si-on':''}">${fmt(s.monthly)} ر.س</b></div>
+        ${s.monthly>0 ? '' : '<div class="si-hint">حدّد مخصّصًا شهريًا عبر «تعديل» ليُخصم من راتبك ويظهر في «كيف يُقسَّم راتبك»</div>'}
+        ${s.goal>0 ? `
+        <div class="si-r"><span>الهدف</span><b class="num">${fmt(s.goal)} ر.س · ${sPct}%</b></div>
+        <div class="si-bar"><i style="width:${sPct}%;background:linear-gradient(90deg,var(--gold-deep),var(--gold-soft))"></i></div>` : ''}
+      </div>
+    </div>
+
+    <div class="si-box">
+      <div class="si-head">
+        <div class="si-title">
+          <span class="si-ico inv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-4 4"/><path d="M19 9h-4M19 9v4"/></svg></span>
+          <div><div class="si-name">الاستثمار</div><div class="si-sub">${v.entity ? v.entity : 'لم تُحدَّد الجهة'}</div></div>
+        </div>
+        <button class="si-edit" data-edit="investment">تعديل</button>
+      </div>
+      <div class="si-amount num">${fmt(vTot)} <span class="cur">ر.س</span></div>
+      <div class="si-label">إجمالي مبلغ الاستثمار${w.investment>0?` <span class="si-wd">(−${fmt(w.investment)} سحب طارئ)</span>`:''}</div>
+      <div class="si-rows">
+        <div class="si-r"><span>الجهة المستثمر فيها</span><b>${v.entity || '—'}</b></div>
+        <div class="si-r"><span>المخصّص الشهري للاستثمار</span><b class="num ${v.monthly>0?'si-on':''}">${fmt(v.monthly)} ر.س</b></div>
+        ${v.monthly>0 ? '' : '<div class="si-hint">حدّد مخصّصًا شهريًا عبر «تعديل» ليُخصم من راتبك ويظهر في «كيف يُقسَّم راتبك»</div>'}
+      </div>
+    </div>`;
+
+  grid.querySelectorAll('.si-edit').forEach(b=>{
+    b.onclick = ()=> b.dataset.edit==='savings' ? editSavings() : editInvestment();
+  });
+}
+
+/* ---- date format ---- */
+function formatDate(d){
+  if(!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+/* ============== Actions ============== */
+function todayISO(){ const d=new Date(); return monthKey(d)+'-'+String(d.getDate()).padStart(2,'0'); }
+
+/* ---- month navigation ---- */
+function shiftMonth(delta){
+  const [y,m] = S.currentMonth.split('-').map(Number);
+  const d = new Date(y, m-1+delta, 1);
+  S.currentMonth = monthKey(d);
+  save(); render();
+}
+
+/* ============== Modals ============== */
+const overlay = document.getElementById('overlay');
+const modal = document.getElementById('modal');
+function openModal(html){ modal.innerHTML=html; overlay.classList.add('show'); }
+function closeModal(){ overlay.classList.remove('show'); }
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+
+function editSalary(){
+  openModal(`
+    <div class="modal-head"><h3>تعديل الراتب الشهري</h3><p>المبلغ الذي يدخل حسابك كل شهر.</p></div>
+    <div class="modal-body">
+      <div class="field"><label>الراتب (ر.س)</label><input type="number" id="mSalary" value="${S.salary}" min="0"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-primary" id="mSave">حفظ</button>
+    </div>`);
+  document.getElementById('mSave').onclick = ()=>{
+    const v = parseFloat(document.getElementById('mSalary').value)||0;
+    S.salary = v; save(); render(); closeModal(); toast('تم تحديث الراتب');
+  };
+}
+
+function editLiving(){
+  const monthly = (S.living && S.living.monthly) || 0;
+  openModal(`
+    <div class="modal-head"><h3>المصروف الشهري</h3><p>المبلغ المخصّص للأكل والشرب والبنزين طوال الشهر.</p></div>
+    <div class="modal-body">
+      <div class="field"><label>المخصّص الشهري (ر.س)</label><input type="number" id="mLiving" value="${monthly}" min="0"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-primary" id="mSave">حفظ</button>
+    </div>`);
+  document.getElementById('mSave').onclick = ()=>{
+    if(!S.living) S.living={};
+    S.living.monthly = parseFloat(document.getElementById('mLiving').value)||0;
+    save(); render(); closeModal(); toast('تم تحديث المصروف الشهري');
+  };
+}
+
+function editBudget(catId){
+  const c = catById(catId); if(!c) return;
+  openModal(`
+    <div class="modal-head"><h3>ميزانية: ${c.name}</h3><p>المبلغ المخصّص لهذه الفئة شهريًا.</p></div>
+    <div class="modal-body">
+      <div class="field"><label>الميزانية (ر.س)</label><input type="number" id="mBudget" value="${c.budget}" min="0"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-primary" id="mSave">حفظ</button>
+    </div>`);
+  document.getElementById('mSave').onclick = ()=>{
+    c.budget = parseFloat(document.getElementById('mBudget').value)||0;
+    save(); render(); closeModal(); toast('تم تحديث الميزانية');
+  };
+}
+
+function deleteCategory(catId){
+  const c = catById(catId); if(!c) return;
+  if (S.categories.length<=1){ toast('يجب إبقاء فئة واحدة على الأقل'); return; }
+  // count related expenses across all months
+  let count=0;
+  Object.values(S.months).forEach(m=> (m.expenses||[]).forEach(e=>{ if(e.catId===catId) count++; }));
+  const warn = count>0
+    ? `<p>هناك <b class="num">${count}</b> معاملة مسجّلة على هذه الفئة — ستبقى محفوظة لكنها ستظهر كـ «غير مصنّف».</p>`
+    : `<p>سيتم حذف هذه الفئة نهائيًا. لا يمكن التراجع.</p>`;
+  openModal(`
+    <div class="modal-head"><h3>حذف فئة: ${c.name}</h3>${warn}</div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-danger" id="confirmDelCat" style="font-weight:700">نعم، حذف الفئة</button>
+    </div>`);
+  document.getElementById('confirmDelCat').onclick = ()=>{
+    S.categories = S.categories.filter(x=>x.id!==catId);
+    save(); render(); closeModal(); toast('تم حذف الفئة');
+  };
+}
+
+function editSavings(){
+  const s = S.savings || {name:'',balance:0,monthly:0,goal:0};
+  openModal(`
+    <div class="modal-head"><h3>المدخرات</h3><p>الرصيد الحالي والمخصّص الشهري يُخصم من المتبقي.</p></div>
+    <div class="modal-body">
+      <div class="field"><label>اسم الصندوق</label><input type="text" id="sName" value="${s.name||''}" placeholder="مثال: صندوق الطوارئ"></div>
+      <div class="field"><label>مجموع الادخار الحالي (ر.س)</label><input type="number" id="sBalance" value="${s.balance||0}" min="0"></div>
+      <div class="field"><label>المخصّص الشهري للادخار (ر.س)</label><input type="number" id="sMonthly" value="${s.monthly||0}" min="0"></div>
+      <div class="field"><label>هدف الادخار — اختياري (ر.س)</label><input type="number" id="sGoal" value="${s.goal||0}" min="0"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-primary" id="mSave">حفظ</button>
+    </div>`);
+  document.getElementById('mSave').onclick = ()=>{
+    S.savings = {
+      name: document.getElementById('sName').value.trim()||'المدخرات',
+      balance: parseFloat(document.getElementById('sBalance').value)||0,
+      monthly: parseFloat(document.getElementById('sMonthly').value)||0,
+      goal: parseFloat(document.getElementById('sGoal').value)||0
+    };
+    save(); render(); closeModal(); toast('تم تحديث المدخرات');
+  };
+}
+
+function editInvestment(){
+  const v = S.investment || {entity:'',total:0,monthly:0};
+  openModal(`
+    <div class="modal-head"><h3>الاستثمار</h3><p>الجهة والإجمالي، والمخصّص الشهري يُخصم من المتبقي.</p></div>
+    <div class="modal-body">
+      <div class="field"><label>الجهة المستثمر فيها</label><input type="text" id="vEntity" value="${v.entity||''}" placeholder="مثال: صندوق مؤشرات / عقار / أسهم"></div>
+      <div class="field"><label>إجمالي مبلغ الاستثمار (ر.س)</label><input type="number" id="vTotal" value="${v.total||0}" min="0"></div>
+      <div class="field"><label>المخصّص الشهري للاستثمار (ر.س)</label><input type="number" id="vMonthly" value="${v.monthly||0}" min="0"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-primary" id="mSave">حفظ</button>
+    </div>`);
+  document.getElementById('mSave').onclick = ()=>{
+    S.investment = {
+      entity: document.getElementById('vEntity').value.trim(),
+      total: parseFloat(document.getElementById('vTotal').value)||0,
+      monthly: parseFloat(document.getElementById('vMonthly').value)||0
+    };
+    save(); render(); closeModal(); toast('تم تحديث الاستثمار');
+  };
+}
+
+/* ---- settings: manage categories + reset ---- */
+function openSettings(){
+  let rows = S.categories.map(c=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <span style="width:11px;height:11px;border-radius:4px;background:${c.color};flex:none"></span>
+      <input data-id="${c.id}" class="cat-name-in" value="${c.name}" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--parchment);font-size:13px">
+      <select data-id="${c.id}" class="cat-grp-in" style="padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--parchment);font-size:12.5px">
+        ${['أساسيات','كماليات','ادخار'].map(g=>`<option ${c.group===g?'selected':''}>${g}</option>`).join('')}
+      </select>
+      <button class="cat-del" data-id="${c.id}" style="width:30px;height:30px;border-radius:8px;color:var(--clay);background:rgba(181,86,63,.1)">✕</button>
+    </div>`).join('');
+
+  openModal(`
+    <div class="modal-head"><h3>الإعدادات والفئات</h3><p>عدّل الفئات أو أضِف فئة جديدة.</p></div>
+    <div class="modal-body" style="max-height:46vh;overflow:auto">
+      ${rows}
+      <button id="addCat" style="width:100%;margin-top:6px;padding:10px;border:1px dashed var(--gold);border-radius:10px;color:var(--gold-deep);font-weight:600;background:rgba(201,161,74,.06)">+ إضافة فئة جديدة</button>
+      <hr style="border:none;border-top:1px solid var(--line);margin:18px 0 14px">
+      <button class="btn-danger" id="resetAll" style="width:100%;padding:11px;border-radius:11px;font-weight:700">تصفير جميع البيانات</button>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">إغلاق</button>
+      <button class="btn-primary" id="mSave">حفظ التغييرات</button>
+    </div>`);
+
+  modal.querySelectorAll('.cat-del').forEach(b=> b.onclick=()=>{
+    if (S.categories.length<=1){ toast('يجب إبقاء فئة واحدة على الأقل'); return; }
+    S.categories = S.categories.filter(c=>c.id!==b.dataset.id);
+    save(); openSettings();
+  });
+  document.getElementById('addCat').onclick = ()=>{
+    const idx = S.categories.length;
+    S.categories.push({ id:'c'+Date.now(), name:'فئة جديدة', group:'كماليات', budget:0, color:PALETTE[idx%PALETTE.length] });
+    save(); openSettings();
+  };
+  document.getElementById('resetAll').onclick = ()=>{
+    openModal(`
+      <div class="modal-head"><h3>تصفير البيانات</h3><p>سيتم حذف كل المصروفات والإعدادات نهائيًا. لا يمكن التراجع.</p></div>
+      <div class="modal-foot">
+        <button class="btn-cancel" onclick="openSettings()">رجوع</button>
+        <button class="btn-danger" id="confirmReset" style="font-weight:700">نعم، تصفير الكل</button>
+      </div>`);
+    document.getElementById('confirmReset').onclick = async ()=>{
+      S = seedState(); await save(); render(); closeModal(); toast('تمت إعادة التهيئة');
+    };
+  };
+  document.getElementById('mSave').onclick = ()=>{
+    modal.querySelectorAll('.cat-name-in').forEach(inp=>{
+      const c = catById(inp.dataset.id); if(c) c.name = inp.value.trim()||c.name;
+    });
+    modal.querySelectorAll('.cat-grp-in').forEach(sel=>{
+      const c = catById(sel.dataset.id); if(c) c.group = sel.value;
+    });
+    save(); render(); closeModal(); toast('تم حفظ التغييرات');
+  };
+}
+
+/* ---- toast ---- */
+let toastT;
+function toast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* ---- bind ---- */
+function bind(){
+  document.getElementById('editSalary').onclick = editSalary;
+  document.getElementById('settingsBtn').onclick = openSettings;
+  document.getElementById('prevMonth').onclick = ()=>shiftMonth(-1);
+  document.getElementById('nextMonth').onclick = ()=>shiftMonth(1);
+}
+
+/* ---- init ---- */
+(async function init(){
+  const raw = await Store.get(KEY);
+  if (raw){
+    try{ S = JSON.parse(raw); }catch(e){ S = seedState(); }
+  } else {
+    S = seedState();
+    await save();
+  }
+  if (!S.currentMonth) S.currentMonth = monthKey(new Date());
+  // migrate / ensure savings & investment exist
+  if (!S.savings){
+    const g = S.goal || {};
+    S.savings = { name:g.name||'صندوق الطوارئ', balance:g.saved||0, monthly:0, goal:g.target||0 };
+  }
+  if (!S.investment){
+    S.investment = { entity:'', total:0, monthly:0 };
+  }
+  if (!S.living){
+    S.living = { monthly: 0 };
+  }
+  delete S.goal;
+  bind();
+  render();
+})();
+
+/* ============================================================
+   معيار الالتزام — إضافة غير تدخّلية (لا تُعدّل أي دالة قائمة)
+   ============================================================ */
+function renderAdherence(){
+  const box = document.getElementById('adherenceBox');
+  if (!box) return;
+  const m = S.currentMonth;
+  const dim = monthDays(m);
+  const monthly = effLivingMonthly();
+  const limit = monthly>0 ? monthly/dim : 0;
+  const daily = livingDaily();
+
+  const days = [];
+  for (let d=1; d<=dim; d++){
+    const ds = m+'-'+String(d).padStart(2,'0');
+    days.push({ d, ds, amt:+daily[ds]||0 });
+  }
+  const logged   = days.filter(x=>x.amt>0);
+  const breached = logged.filter(x=>limit>0 && x.amt>limit);
+  const within   = logged.length - breached.length;
+  const rate     = logged.length ? Math.round(within/logged.length*100) : 0;
+
+  if (limit<=0){ box.innerHTML = '<div class="adh-empty">حدّد المخصّص الشهري في صندوق «المصروف الشهري» ليظهر معيار الالتزام.</div>'; return; }
+  if (!logged.length){ box.innerHTML = '<div class="adh-empty">لم تُسجّل أي صرف يومي بعد — عبّئ الخانات اليومية ليظهر مدى التزامك.</div>'; return; }
+
+  // ---- bar chart (pure SVG) ----
+  const W=640, H=200, padT=20, padB=26, padX=12;
+  const plotH=H-padT-padB, plotW=W-padX*2;
+  const maxVal = (Math.max(limit, ...days.map(x=>x.amt)) * 1.15) || 1;
+  const barW = plotW/dim;
+  const limitY = padT + plotH*(1-limit/maxVal);
+  let bars='', labels='';
+  days.forEach((x,i)=>{
+    const cx = padX + i*barW + barW/2;
+    if (x.amt>0){
+      const bh = Math.max(plotH*(x.amt/maxVal), 2);
+      const bw = Math.max(barW*0.62, 3);
+      const by = padT+plotH-bh;
+      const col = x.amt>limit ? 'var(--clay)' : 'var(--teal)';
+      bars += `<rect x="${cx-bw/2}" y="${by}" width="${bw}" height="${bh}" rx="2" fill="${col}"></rect>`;
+    }
+    if (x.d===1 || x.d%5===0){
+      labels += `<text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--text-soft)">${x.d}</text>`;
+    }
+  });
+  const labY = Math.max(limitY-5, 12);
+  const chart = `
+    <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" class="adh-chart">
+      <line x1="${padX}" y1="${padT+plotH}" x2="${W-padX}" y2="${padT+plotH}" stroke="var(--line)" stroke-width="1"></line>
+      ${bars}
+      <line x1="${padX}" y1="${limitY}" x2="${W-padX}" y2="${limitY}" stroke="var(--gold-deep)" stroke-width="1.5" stroke-dasharray="5 4"></line>
+      <text x="${W-padX}" y="${labY}" text-anchor="end" font-size="11" font-weight="700" fill="var(--gold-deep)">الحد اليومي ${fmt(limit)} ر.س</text>
+      ${labels}
+    </svg>`;
+
+  // ---- breached list ----
+  let breachHtml;
+  if (breached.length){
+    breachHtml = breached.sort((a,b)=>a.d-b.d).map(x=>{
+      const pct = Math.round((x.amt-limit)/limit*100);
+      return `<div class="adh-breach"><span class="ab-day">يوم ${formatDate(x.ds)}</span><span class="ab-amt num">${fmt(x.amt)} ر.س</span><span class="ab-pct">تجاوز بـ ${pct}%</span></div>`;
+    }).join('');
+  } else {
+    breachHtml = '<div class="adh-clean"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> لم تخرق الحد اليومي في أي يوم سجّلته — التزام كامل!</div>';
+  }
+
+  const rateClass = rate>=80?'ok':(rate>=50?'warn':'bad');
+  box.innerHTML = `
+    <div class="adh-top">
+      <div class="adh-rate ${rateClass}">
+        <div class="ar-num num">${rate}<span>%</span></div>
+        <div class="ar-k">نسبة الالتزام بالحد اليومي</div>
+      </div>
+      <div class="adh-mini">
+        <div class="am-cell"><div class="am-v num teal">${within}</div><div class="am-k">أيام ضمن الحد</div></div>
+        <div class="am-cell"><div class="am-v num clay">${breached.length}</div><div class="am-k">أيام تجاوزت الحد</div></div>
+        <div class="am-cell"><div class="am-v num">${logged.length}</div><div class="am-k">أيام سجّلت فيها</div></div>
+      </div>
+    </div>
+    ${chart}
+    <div class="adh-list-head">أيام خرق الحد اليومي</div>
+    <div class="adh-list">${breachHtml}</div>`;
+}
+
+/* استدعاء غير تدخّلي: نغلّف render الحالية دون تعديلها، ونرسم مرة فورًا */
+(function(){
+  try{
+    if (typeof render === 'function'){
+      const __origRender = render;
+      render = function(){ const r = __origRender.apply(this, arguments); try{ renderAdherence(); }catch(e){} return r; };
+    }
+  }catch(e){}
+  try{ renderAdherence(); }catch(e){}
+})();
+
+/* ============================================================
+   العجز اليومي وعلاجه — إضافة غير تدخّلية (لا تُعدّل أي دالة قائمة)
+   ============================================================ */
+function renderDeficit(){
+  const box = document.getElementById('deficitBox');
+  if (!box) return;
+  const m = S.currentMonth;
+  const dim = monthDays(m);
+  const monthly = effLivingMonthly();
+  const limit = monthly>0 ? monthly/dim : 0;
+  const daily = livingDaily();
+
+  if (limit<=0){ box.innerHTML = '<div class="df-empty">حدّد المخصّص الشهري في «المصروف الشهري» لعرض العجز والعلاج.</div>'; return; }
+
+  let spent=0, overspend=0, breachDays=0, daysLogged=0;
+  for (let d=1; d<=dim; d++){
+    const ds = m+'-'+String(d).padStart(2,'0'); const a = +daily[ds]||0;
+    if (a>0){ daysLogged++; spent += a; if (a>limit){ overspend += (a-limit); breachDays++; } }
+  }
+  if (!daysLogged){ box.innerHTML = '<div class="df-empty">لم تُسجّل أي صرف يومي بعد — عبّئ الخانات اليومية ليظهر العجز والعلاج.</div>'; return; }
+
+  const expectedForLogged = limit * daysLogged;                  // المفترض صرفه خلال الأيام المسجّلة
+  const netOver = spent - expectedForLogged;                     // العجز التراكمي (موجب = عجز فعلي)
+  const daysRemaining = Math.max(dim - daysLogged, 0);           // الأيام التي لم تُسجَّل بعد
+  const remainingBudget = monthly - spent;                       // المتبقي من المخصّص الشهري
+  const adjustedDaily = daysRemaining>0 ? remainingBudget/daysRemaining : remainingBudget;
+  const dailyCut = Math.max(limit - adjustedDaily, 0);           // كم يجب خفض الحد يوميًا
+  const avgBreach = breachDays ? overspend/breachDays : 0;
+
+  const overBudget = remainingBudget < 0;                        // تجاوز المخصّص كله
+  const needsTreatment = overBudget || netOver > 0.5;            // أي تجاوز صافٍ للمعدّل = عجز
+
+  // top stats
+  const top = `
+    <div class="df-top">
+      <div class="df-stat ${needsTreatment?'bad':'good'}">
+        <div class="df-k">العجز اليومي المطلوب خفضه</div>
+        <div class="df-v ${needsTreatment?'clay':'teal'}">${fmt(dailyCut)}</div>
+        <div class="df-u">ر.س أقل من الحد يوميًا</div>
+      </div>
+      <div class="df-stat ${netOver>0.5?'bad':'good'}">
+        <div class="df-k">العجز التراكمي حتى الآن</div>
+        <div class="df-v ${netOver>0.5?'clay':'teal'}">${fmt(Math.max(netOver,0))}</div>
+        <div class="df-u">ر.س فوق المعدّل خلال ${daysLogged} يوم</div>
+      </div>
+      <div class="df-stat ${overBudget?'bad':'good'}">
+        <div class="df-k">المتبقي من المخصّص الشهري</div>
+        <div class="df-v ${overBudget?'clay':'teal'}">${fmt(remainingBudget)}</div>
+        <div class="df-u">لـ ${daysRemaining} ${daysRemaining===1?'يوم':'يوم'} غير مسجّل</div>
+      </div>
+    </div>`;
+
+  // remedy block
+  let cure;
+  if (overBudget){
+    cure = `
+      <div class="df-cure bad">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
+        <div class="ct">
+          <div class="t">تجاوزت مخصّصك الشهري بالكامل</div>
+          <p>صرفت <b class="num">${fmt(spent)}</b> ر.س من أصل <b class="num">${fmt(monthly)}</b> ر.س — أي بزيادة <b class="num">${fmt(-remainingBudget)}</b> ر.س.
+          ${daysRemaining>0 ? `لتفادي مزيد من العجز، أوقف الصرف من هذا البند قدر الإمكان في الأيام الـ <b class="num">${daysRemaining}</b> المتبقية، أو عوّض الفرق من بند «غير الموزّع».` : 'انتهى الشهر — راجع مخصّص الشهر القادم.'}</p>
+        </div>
+      </div>`;
+  } else if (needsTreatment && daysRemaining>0){
+    cure = `
+      <div class="df-cure bad">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg></div>
+        <div class="ct">
+          <div class="t">العلاج: اخفض حدّك اليومي مؤقتًا</div>
+          <p>تجاوزت المعدّل بمقدار <b class="num">${fmt(netOver)}</b> ر.س خلال <b class="num">${daysLogged}</b> يومًا.
+          لتبقى ضمن مخصّصك (<b class="num">${fmt(monthly)}</b> ر.س) عليك ألا تتجاوز
+          <b class="num">${fmt(adjustedDaily)}</b> ر.س يوميًا خلال الأيام الـ <b class="num">${daysRemaining}</b> المتبقية —
+          أي بخفض <b class="num">${fmt(dailyCut)}</b> ر.س عن حدّك الأساسي (<b class="num">${fmt(limit)}</b> ر.س).</p>
+        </div>
+      </div>`;
+  } else {
+    cure = `
+      <div class="df-cure good">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div class="ct">
+          <div class="t">لا يوجد عجز يحتاج علاجًا</div>
+          <p>أنت ضمن مخصّصك. ${daysRemaining>0 ? `يمكنك الصرف حتى <b class="num">${fmt(adjustedDaily)}</b> ر.س يوميًا في الأيام الـ <b class="num">${daysRemaining}</b> المتبقية والبقاء ضمن الخطة.` : 'انتهى الشهر بالتزام جيد.'}</p>
+        </div>
+      </div>`;
+  }
+
+  // visual compare: base limit vs adjusted daily
+  const cmpMax = Math.max(limit, adjustedDaily, 1);
+  const compare = `
+    <div class="df-compare">
+      <div class="df-bar">
+        <div class="bk">الحد الأساسي اليومي <b class="num">${fmt(limit)} ر.س</b></div>
+        <div class="df-track"><i style="width:${Math.min(limit/cmpMax*100,100)}%;background:var(--gold-deep)"></i></div>
+      </div>
+      <div class="df-bar">
+        <div class="bk">الحد المعدّل للأيام المتبقية <b class="num">${fmt(Math.max(adjustedDaily,0))} ر.س</b></div>
+        <div class="df-track"><i style="width:${Math.min(Math.max(adjustedDaily,0)/cmpMax*100,100)}%;background:${adjustedDaily<limit-0.5?'var(--clay)':'var(--teal)'}"></i></div>
+      </div>
+    </div>`;
+
+  box.innerHTML = top + cure + compare;
+}
+
+/* استدعاء غير تدخّلي ثانٍ: نغلّف render الحالية أيضًا دون تعديلها */
+(function(){
+  try{
+    if (typeof render === 'function'){
+      const __r2 = render;
+      render = function(){ const r = __r2.apply(this, arguments); try{ renderDeficit(); }catch(e){} return r; };
+    }
+  }catch(e){}
+  try{ renderDeficit(); }catch(e){}
+})();
+/* ============================================================
+   السحوبات الطارئة — صندوق التسجيل والعرض
+   ============================================================ */
+function renderEmergency(ctx){
+  const box = document.getElementById('emergencyBox');
+  if (!box) return;
+  const list = withdrawalsList().slice().sort((a,b)=>b.id-a.id);
+  const total = ctx ? ctx.totalEmergency : 0;
+
+  const sources = [
+    {v:'savings',      label:'المدخرات (الرصيد)'},
+    {v:'investment',   label:'الاستثمار (الإجمالي)'},
+    {v:'living',       label:'المصروف الشهري'},
+    {v:'unallocated',  label:'غير الموزّع'},
+  ].concat(S.categories.map(c=>({v:'cat:'+c.id, label:'فئة: '+c.name})));
+
+  const sourceLabel = (src)=>{
+    if (src && src.indexOf('cat:')===0){ const c=catById(src.slice(4)); return c?('فئة: '+c.name):'فئة محذوفة'; }
+    const f = sources.find(s=>s.v===src); return f?f.label:src;
+  };
+
+  let html = `
+    <div class="em-form">
+      <div class="field">
+        <label for="emSource">من أين سحبت؟</label>
+        <select id="emSource">${sources.map(s=>`<option value="${s.v}">${s.label}</option>`).join('')}</select>
+      </div>
+      <div class="field">
+        <label for="emAmount">المبلغ (ر.س)</label>
+        <input type="number" id="emAmount" min="0" step="1" placeholder="0">
+      </div>
+      <div class="field">
+        <label for="emNote">ملاحظة (اختياري)</label>
+        <input type="text" id="emNote" placeholder="سبب السحب الطارئ">
+      </div>
+      <button class="add-btn" id="emAdd">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        تسجيل السحب
+      </button>
+    </div>
+    <div class="em-bar">
+      <span class="em-count">${list.length} ${list.length===1?'سحب':'سحب'} طارئ هذا الشهر</span>
+      <span class="em-total">الإجمالي: <b class="num">${fmt(total)}</b> ر.س</span>
+    </div>`;
+
+  if (!list.length){
+    html += `<div class="em-empty">لا توجد سحوبات طارئة هذا الشهر. سجّل أي سحب غير معتاد ليُخصم من مصدره وينعكس على كل الأرقام والمخصّصات بالأعلى.</div>`;
+  } else {
+    html += '<div class="em-list">' + list.map(x=>`
+      <div class="em-item">
+        <span class="ei-src">${sourceLabel(x.source)}</span>
+        <span class="ei-note">${x.note || 'سحب طارئ'}</span>
+        <span class="ei-date num">${formatDate(x.date)}</span>
+        <span class="ei-amt num">−${fmt(x.amount)} ر.س</span>
+        <button class="ei-del" data-del="${x.id}" title="حذف"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>`).join('') + '</div>';
+  }
+
+  box.innerHTML = html;
+
+  const addBtn = document.getElementById('emAdd');
+  if (addBtn) addBtn.onclick = ()=>{
+    const src = document.getElementById('emSource').value;
+    const amt = parseFloat(document.getElementById('emAmount').value)||0;
+    const note = document.getElementById('emNote').value.trim();
+    if (amt<=0){ toast('أدخل مبلغًا صحيحًا'); return; }
+    addWithdrawal(src, amt, note);
+    toast('تم تسجيل السحب الطارئ');
+  };
+  box.querySelectorAll('.ei-del').forEach(b=>{
+    b.onclick = ()=>{ deleteWithdrawal(Number(b.dataset.del)); toast('تم حذف السحب'); };
+  });
+}
+</script>
+</body>
+</html>

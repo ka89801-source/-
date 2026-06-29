@@ -1,0 +1,14 @@
+# نظام التشغيل
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# المحررات
+.vscode/
+.idea/
+*.swp
+
+# السجلات والمؤقتات
+*.log
+node_modules/
+.cache/
