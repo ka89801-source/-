@@ -72,7 +72,7 @@
   .month-nav button{width:32px;height:32px;border-radius:8px;color:var(--ink-700);
     display:grid;place-items:center;transition:.15s}
   .month-nav button:hover{background:#fff}
-  .month-nav .label{min-width:118px;text-align:center;font-weight:600;font-size:14px}
+  .month-nav .label{min-width:205px;text-align:center;font-weight:600;font-size:14px;white-space:nowrap}
 
   .ghost-btn{
     display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;
@@ -738,7 +738,12 @@ function fmt(n){ return Math.round(n||0).toLocaleString('en-US'); }
 function monthName(key){
   const [y,m] = key.split('-').map(Number);
   const names = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-  return names[m-1] + ' ' + y;
+  const endDate = new Date(y, m, 25); // اليوم 25 من الشهر التالي
+  const endMonth = names[endDate.getMonth()];
+  const endYear = endDate.getFullYear();
+  return endYear === y
+    ? `25 ${names[m-1]} إلى 25 ${endMonth} ${y}`
+    : `25 ${names[m-1]} ${y} إلى 25 ${endMonth} ${endYear}`;
 }
 function expensesOf(monthK){ return (S.months[monthK] && S.months[monthK].expenses) || []; }
 function catById(id){ return S.categories.find(c=>c.id===id); }
