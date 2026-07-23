@@ -588,7 +588,7 @@
       </div>
       <div class="hero-mini">
         <div class="v pos num" id="heroRemaining">0</div>
-        <div class="k">المتبقي غير الموزّع<br><span style="opacity:.7">بعد الفئات والادخار والاستثمار</span></div>
+        <div class="k">الفائض المتاح للتخصيص<br><span style="opacity:.7">بعد الفئات والمصروف الشهري والادخار والاستثمار</span></div>
       </div>
     </div>
 
@@ -613,9 +613,9 @@
     </div>
     <div class="kpi">
       <div class="ico i-ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-5"/></svg></div>
-      <div class="k">الموزّع من الراتب</div>
+      <div class="k">المخصّص من الراتب</div>
       <div class="v num" id="kBudget">0</div>
-      <small id="kBudgetPct">ميزانيات + ادخار + استثمار</small>
+      <small id="kBudgetPct">فئات + مصروف شهري + ادخار + استثمار</small>
     </div>
     <div class="kpi">
       <div class="ico i-clay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8L2 22"/><path d="M17.5 15H9V6.5"/><circle cx="12" cy="12" r="9"/></svg></div>
@@ -625,9 +625,9 @@
     </div>
     <div class="kpi">
       <div class="ico i-teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></div>
-      <div class="k">المتبقي غير الموزّع</div>
+      <div class="k">الفائض المتاح للتخصيص</div>
       <div class="v teal num" id="kRemaining">0</div>
-      <small id="kRemainingPct">غير موزّع بعد</small>
+      <small id="kRemainingPct">متاح للإضافة إلى الادخار أو الاستثمار أو أي بند آخر</small>
     </div>
   </div>
 
@@ -658,7 +658,7 @@
   <section class="panel" style="margin-top:20px">
     <div class="panel-head">
       <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> المدخرات والاستثمار</h2>
-      <span class="sub">المخصّص الشهري يُخصم من المتبقي</span>
+      <span class="sub">المخصّص الشهري يُخصم من الفائض المتاح للتخصيص</span>
     </div>
     <div class="si-grid" id="siGrid"></div>
   </section>
@@ -863,6 +863,99 @@ function seedState(){
 
 let S = null;
 
+/* ---- month-specific configuration ----
+   الراتب والفئات والميزانيات ومخصصات الادخار/الاستثمار/المصروف الشهري
+   تُحفظ كنسخة مستقلة داخل كل شهر. القيم العامة في S تبقى مرآة للشهر المفتوح فقط
+   للحفاظ على توافق بقية الكود. */
+function baseConfigFromGlobals(){
+  return {
+    salary: +(S && S.salary != null ? S.salary : 12000) || 0,
+    savings: cloneState((S && S.savings) || { name:'صندوق الطوارئ', balance:0, monthly:0, goal:0 }),
+    investment: cloneState((S && S.investment) || { entity:'', total:0, monthly:0 }),
+    living: cloneState((S && S.living) || { monthly:0 }),
+    categories: cloneState((S && Array.isArray(S.categories) && S.categories.length ? S.categories : [
+      { id:'c1', name:'السكن والإيجار', group:'أساسيات', budget:0, color:'#143257' }
+    ]))
+  };
+}
+function configFromMonth(monthK){
+  const m = S && S.months ? S.months[monthK] : null;
+  return m && m.config && typeof m.config === 'object' ? m.config : null;
+}
+function previousMonthKey(monthK){
+  const [y,m] = monthK.split('-').map(Number);
+  return monthKey(new Date(y, m-2, 1));
+}
+function nextMonthKey(monthK){
+  const [y,m] = monthK.split('-').map(Number);
+  return monthKey(new Date(y, m, 1));
+}
+function findNearestConfig(monthK, sourceMonthK){
+  if (sourceMonthK && configFromMonth(sourceMonthK)) return configFromMonth(sourceMonthK);
+  if (configFromMonth(monthK)) return configFromMonth(monthK);
+
+  let prev = previousMonthKey(monthK);
+  for (let i=0; i<36; i++){
+    const cfg = configFromMonth(prev);
+    if (cfg) return cfg;
+    prev = previousMonthKey(prev);
+  }
+
+  let next = nextMonthKey(monthK);
+  for (let i=0; i<36; i++){
+    const cfg = configFromMonth(next);
+    if (cfg) return cfg;
+    next = nextMonthKey(next);
+  }
+  return null;
+}
+function ensureMonthConfig(monthK=S.currentMonth, sourceMonthK=null){
+  if (!S.months) S.months = {};
+  if (!S.months[monthK]) S.months[monthK] = {};
+  const m = S.months[monthK];
+  if (!m.config){
+    m.config = cloneState(findNearestConfig(monthK, sourceMonthK) || baseConfigFromGlobals());
+  }
+  if (!Array.isArray(m.config.categories) || !m.config.categories.length){
+    m.config.categories = cloneState(baseConfigFromGlobals().categories);
+  }
+  if (!m.config.savings) m.config.savings = { name:'المدخرات', balance:0, monthly:0, goal:0 };
+  if (!m.config.investment) m.config.investment = { entity:'', total:0, monthly:0 };
+  if (!m.config.living) m.config.living = { monthly:0 };
+  if (m.config.salary == null) m.config.salary = +(S.salary || 0);
+  return m.config;
+}
+function applyMonthConfig(monthK=S.currentMonth){
+  const cfg = ensureMonthConfig(monthK);
+  S.salary = +(cfg.salary || 0);
+  S.savings = cloneState(cfg.savings || { name:'المدخرات', balance:0, monthly:0, goal:0 });
+  S.investment = cloneState(cfg.investment || { entity:'', total:0, monthly:0 });
+  S.living = cloneState(cfg.living || { monthly:0 });
+  S.categories = cloneState(cfg.categories || []);
+}
+function writeCurrentConfig(){
+  if (!S || !S.currentMonth) return;
+  const cfg = ensureMonthConfig(S.currentMonth);
+  cfg.salary = +(S.salary || 0);
+  cfg.savings = cloneState(S.savings || { name:'المدخرات', balance:0, monthly:0, goal:0 });
+  cfg.investment = cloneState(S.investment || { entity:'', total:0, monthly:0 });
+  cfg.living = cloneState(S.living || { monthly:0 });
+  cfg.categories = cloneState(Array.isArray(S.categories) ? S.categories : []);
+}
+function normalizeState(){
+  if (!S.months) S.months = {};
+  if (!S.currentMonth) S.currentMonth = monthKey(new Date());
+  if (!S.savings){
+    const g = S.goal || {};
+    S.savings = { name:g.name||'صندوق الطوارئ', balance:g.saved||0, monthly:0, goal:g.target||0 };
+  }
+  if (!S.investment) S.investment = { entity:'', total:0, monthly:0 };
+  if (!S.living) S.living = { monthly:0 };
+  delete S.goal;
+  ensureMonthConfig(S.currentMonth);
+  applyMonthConfig(S.currentMonth);
+}
+
 /* ---- helpers ---- */
 function monthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 function fmt(n){ return Math.round(n||0).toLocaleString('en-US'); }
@@ -899,6 +992,7 @@ function updateSaveStatus(ok, message, tone){
 
 function save(){
   try{
+    writeCurrentConfig();
     Store.set(KEY, JSON.stringify(S));
     updateSaveStatus(true);
     if (currentUser && !isCloudHydrating) queueCloudSave();
@@ -922,6 +1016,7 @@ function queueCloudSave(delay=650){
 
 async function saveCloudNow(){
   if (!supabaseDb || !currentUser || !S || cloudSaveRunning) return false;
+  writeCurrentConfig();
   const payloadJSON = JSON.stringify(S);
   if (payloadJSON === lastSyncedJSON) return true;
   cloudSaveRunning = true;
@@ -960,6 +1055,7 @@ async function loadCloudState(){
     if (data && validStateObject(data.state)){
       isCloudHydrating = true;
       S = data.state;
+      normalizeState();
       lastSyncedJSON = JSON.stringify(S);
       lastCloudUpdatedAt = data.updated_at || null;
       Store.set(KEY, JSON.stringify(S));
@@ -990,8 +1086,8 @@ async function loadCloudState(){
    - "مدفوع بالكامل": يجعل المصروف الفعلي للفئة = ميزانيتها (للبنود الثابتة
      كالإيجار ومصروف الوالدين) دون إدخالها كمعاملات. لا يغيّر المتبقي لأن
      الميزانية محجوزة أصلًا، لكنه يرفع "المصروف الفعلي" ويملأ شريط الفئة.
-   - الموزّع من الراتب = مجموع المحجوز للفئات + المخصّص الشهري للادخار + للاستثمار.
-   - المتبقي غير الموزّع = الراتب − الموزّع.
+   - المخصّص من الراتب = مجموع الفئات + المصروف الشهري + المخصّص الشهري للادخار + المخصّص الشهري للاستثمار + السحوبات الطارئة من مخصّصات الشهر.
+   - الفائض المتاح للتخصيص = الراتب − المخصّص من الراتب.
    ============================================================ */
 function paidMap(){ const m=S.months[S.currentMonth]; return (m&&m.paid)||{}; }
 function isPaid(catId){ return !!paidMap()[catId]; }
@@ -1082,11 +1178,12 @@ function daysElapsed(key){
 
 /* ---- core render ---- */
 function render(){
+  ensureMonthConfig(S.currentMonth);
   const m = S.currentMonth;
   const income = S.salary || 0;
 
   const M = computeMonth();
-  const remaining   = income - M.allocated;                       // غير الموزّع
+  const remaining   = income - M.allocated;                       // الفائض المتاح للتخصيص
   const actualSpent = M.paidFixed + M.livingSpent + M.totalEmergency; // فعلي + سحوبات طارئة
 
   const ctx = Object.assign({ income, remaining, actualSpent }, M);
@@ -1107,7 +1204,7 @@ function render(){
   const kr = document.getElementById('kRemaining');
   kr.textContent = fmt(remaining);
   kr.className = 'v num ' + (remaining>=0?'teal':'clay');
-  document.getElementById('kRemainingPct').textContent = remaining>=0?'غير موزّع بعد':'تجاوزت راتبك';
+  document.getElementById('kRemainingPct').textContent = remaining>=0?'متاح للإضافة إلى الادخار أو الاستثمار أو أي بند آخر':'تجاوزت راتبك';
 
   renderRibbon(ctx);
   renderCategories(ctx);
@@ -1141,7 +1238,7 @@ function renderRibbon(ctx){
   addSeg(invM, '#2E7D6E', 'استثمار · '+fmt(invM)+' ر.س');
   if (ctx.emergency>0) addSeg(ctx.emergency, '#8A3324', 'سحب طارئ · '+fmt(ctx.emergency)+' ر.س');
   const unalloc = income - allocated;
-  if (unalloc > 0) addSeg(unalloc, 'rgba(255,255,255,.14)', 'غير موزّع · '+fmt(unalloc)+' ر.س');
+  if (unalloc > 0) addSeg(unalloc, 'rgba(255,255,255,.14)', 'فائض متاح · '+fmt(unalloc)+' ر.س');
 
   const items = [
     {label:'الفئات الثابتة', val:fixedBudget,   color:'#1C4E6B'},
@@ -1149,10 +1246,10 @@ function renderRibbon(ctx){
     {label:'ادخار',          val:savM,           color:'#C9A14A'},
     {label:'استثمار',        val:invM,           color:'#2E7D6E'},
     {label:'سحب طارئ',       val:ctx.emergency||0, color:'#8A3324'},
-    {label:'غير موزّع',      val:Math.max(unalloc,0), color:'rgba(255,255,255,.4)'},
+    {label:'فائض متاح',      val:Math.max(unalloc,0), color:'rgba(255,255,255,.4)'},
   ];
   items.forEach(it=>{
-    if (it.val<=0 && it.label!=='غير موزّع') return;
+    if (it.val<=0 && it.label!=='فائض متاح') return;
     const pct = income? Math.round(it.val/income*100):0;
     const el = document.createElement('div'); el.className='lg';
     el.innerHTML = `<span class="dot" style="background:${it.color}"></span>${it.label} <b>${pct}%</b> · ${fmt(it.val)} ر.س`;
@@ -1227,7 +1324,7 @@ function renderDonut(ctx){
   if (invM>0) data.push({name:'استثمار', color:'#2E7D6E', value:invM});
   if (ctx.emergency>0) data.push({name:'سحب طارئ', color:'#8A3324', value:ctx.emergency});
   const unalloc = income - allocated;
-  if (unalloc>0) data.push({name:'غير موزّع', color:'#D9CFB8', value:unalloc});
+  if (unalloc>0) data.push({name:'فائض متاح', color:'#D9CFB8', value:unalloc});
 
   const grandTotal = data.reduce((a,d)=>a+d.value,0);
   if (!data.length || grandTotal<=0){
@@ -1383,7 +1480,7 @@ function renderSavingsInvestment(){
         <button class="si-edit" data-edit="savings">تعديل</button>
       </div>
       <div class="si-amount num">${fmt(sBal)} <span class="cur">ر.س</span></div>
-      <div class="si-label">إجمالي الرصيد المدخر الحالي${w.savings>0?` <span class="si-wd">(−${fmt(w.savings)} سحب طارئ)</span>`:''}</div>
+      <div class="si-label">إجمالي الرصيد المدخر الحالي — للمتابعة فقط${w.savings>0?` <span class="si-wd">(−${fmt(w.savings)} سحب طارئ)</span>`:''}</div>
       <div class="si-rows">
         <div class="si-r"><span>المخصّص الشهري للادخار</span><b class="num ${s.monthly>0?'si-on':''}">${fmt(s.monthly)} ر.س</b></div>
         ${s.monthly>0 ? '' : '<div class="si-hint">حدّد مخصّصًا شهريًا عبر «تعديل» ليُخصم من راتبك ويظهر في «كيف يُقسَّم راتبك»</div>'}
@@ -1402,7 +1499,7 @@ function renderSavingsInvestment(){
         <button class="si-edit" data-edit="investment">تعديل</button>
       </div>
       <div class="si-amount num">${fmt(vTot)} <span class="cur">ر.س</span></div>
-      <div class="si-label">إجمالي مبلغ الاستثمار${w.investment>0?` <span class="si-wd">(−${fmt(w.investment)} سحب طارئ)</span>`:''}</div>
+      <div class="si-label">إجمالي مبلغ الاستثمار — للمتابعة فقط${w.investment>0?` <span class="si-wd">(−${fmt(w.investment)} سحب طارئ)</span>`:''}</div>
       <div class="si-rows">
         <div class="si-r"><span>الجهة المستثمر فيها</span><b>${v.entity || '—'}</b></div>
         <div class="si-r"><span>المخصّص الشهري للاستثمار</span><b class="num ${v.monthly>0?'si-on':''}">${fmt(v.monthly)} ر.س</b></div>
@@ -1427,9 +1524,13 @@ function todayISO(){ const d=new Date(); return monthKey(d)+'-'+String(d.getDate
 
 /* ---- month navigation ---- */
 function shiftMonth(delta){
+  const oldMonth = S.currentMonth;
+  writeCurrentConfig();
   const [y,m] = S.currentMonth.split('-').map(Number);
   const d = new Date(y, m-1+delta, 1);
   S.currentMonth = monthKey(d);
+  ensureMonthConfig(S.currentMonth, oldMonth);
+  applyMonthConfig(S.currentMonth);
   save(); render();
 }
 
@@ -1442,7 +1543,7 @@ overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
 
 function editSalary(){
   openModal(`
-    <div class="modal-head"><h3>تعديل الراتب الشهري</h3><p>المبلغ الذي يدخل حسابك كل شهر.</p></div>
+    <div class="modal-head"><h3>تعديل راتب هذا الشهر</h3><p>هذا التعديل يخص الشهر المعروض فقط، ولا يغيّر راتب الأشهر الأخرى.</p></div>
     <div class="modal-body">
       <div class="field"><label>الراتب (ر.س)</label><input type="number" id="mSalary" value="${S.salary}" min="0"></div>
     </div>
@@ -1459,7 +1560,7 @@ function editSalary(){
 function editLiving(){
   const monthly = (S.living && S.living.monthly) || 0;
   openModal(`
-    <div class="modal-head"><h3>المصروف الشهري</h3><p>المبلغ المخصّص للأكل والشرب والبنزين طوال الشهر.</p></div>
+    <div class="modal-head"><h3>المصروف الشهري لهذا الشهر</h3><p>المبلغ المخصّص للأكل والشرب والبنزين في الشهر المعروض فقط.</p></div>
     <div class="modal-body">
       <div class="field"><label>المخصّص الشهري (ر.س)</label><input type="number" id="mLiving" value="${monthly}" min="0"></div>
     </div>
@@ -1477,7 +1578,7 @@ function editLiving(){
 function editBudget(catId){
   const c = catById(catId); if(!c) return;
   openModal(`
-    <div class="modal-head"><h3>ميزانية: ${c.name}</h3><p>المبلغ المخصّص لهذه الفئة شهريًا.</p></div>
+    <div class="modal-head"><h3>ميزانية: ${c.name}</h3><p>المبلغ المخصّص لهذه الفئة في الشهر المعروض فقط.</p></div>
     <div class="modal-body">
       <div class="field"><label>الميزانية (ر.س)</label><input type="number" id="mBudget" value="${c.budget}" min="0"></div>
     </div>
@@ -1494,9 +1595,9 @@ function editBudget(catId){
 function deleteCategory(catId){
   const c = catById(catId); if(!c) return;
   if (S.categories.length<=1){ toast('يجب إبقاء فئة واحدة على الأقل'); return; }
-  // count related expenses across all months
+  // count related expenses in the current month only
   let count=0;
-  Object.values(S.months).forEach(m=> (m.expenses||[]).forEach(e=>{ if(e.catId===catId) count++; }));
+  (expensesOf(S.currentMonth)||[]).forEach(e=>{ if(e.catId===catId) count++; });
   const warn = count>0
     ? `<p>هناك <b class="num">${count}</b> معاملة مسجّلة على هذه الفئة — ستبقى محفوظة لكنها ستظهر كـ «غير مصنّف».</p>`
     : `<p>سيتم حذف هذه الفئة نهائيًا. لا يمكن التراجع.</p>`;
@@ -1515,11 +1616,11 @@ function deleteCategory(catId){
 function editSavings(){
   const s = S.savings || {name:'',balance:0,monthly:0,goal:0};
   openModal(`
-    <div class="modal-head"><h3>المدخرات</h3><p>الرصيد الحالي والمخصّص الشهري يُخصم من المتبقي.</p></div>
+    <div class="modal-head"><h3>المدخرات لهذا الشهر</h3><p>الرصيد الحالي للمتابعة فقط، أما المخصّص الشهري فيخص الشهر المعروض فقط.</p></div>
     <div class="modal-body">
       <div class="field"><label>اسم الصندوق</label><input type="text" id="sName" value="${s.name||''}" placeholder="مثال: صندوق الطوارئ"></div>
-      <div class="field"><label>مجموع الادخار الحالي (ر.س)</label><input type="number" id="sBalance" value="${s.balance||0}" min="0"></div>
-      <div class="field"><label>المخصّص الشهري للادخار (ر.س)</label><input type="number" id="sMonthly" value="${s.monthly||0}" min="0"></div>
+      <div class="field"><label>مجموع الادخار الحالي — للمتابعة فقط (ر.س)</label><input type="number" id="sBalance" value="${s.balance||0}" min="0"></div>
+      <div class="field"><label>المخصّص الشهري للادخار — يُخصم من الراتب (ر.س)</label><input type="number" id="sMonthly" value="${s.monthly||0}" min="0"></div>
       <div class="field"><label>هدف الادخار — اختياري (ر.س)</label><input type="number" id="sGoal" value="${s.goal||0}" min="0"></div>
     </div>
     <div class="modal-foot">
@@ -1540,11 +1641,11 @@ function editSavings(){
 function editInvestment(){
   const v = S.investment || {entity:'',total:0,monthly:0};
   openModal(`
-    <div class="modal-head"><h3>الاستثمار</h3><p>الجهة والإجمالي، والمخصّص الشهري يُخصم من المتبقي.</p></div>
+    <div class="modal-head"><h3>الاستثمار لهذا الشهر</h3><p>الإجمالي والجهة للمتابعة فقط، أما المخصّص الشهري فيخص الشهر المعروض فقط.</p></div>
     <div class="modal-body">
       <div class="field"><label>الجهة المستثمر فيها</label><input type="text" id="vEntity" value="${v.entity||''}" placeholder="مثال: صندوق مؤشرات / عقار / أسهم"></div>
-      <div class="field"><label>إجمالي مبلغ الاستثمار (ر.س)</label><input type="number" id="vTotal" value="${v.total||0}" min="0"></div>
-      <div class="field"><label>المخصّص الشهري للاستثمار (ر.س)</label><input type="number" id="vMonthly" value="${v.monthly||0}" min="0"></div>
+      <div class="field"><label>إجمالي مبلغ الاستثمار — للمتابعة فقط — للمتابعة فقط (ر.س)</label><input type="number" id="vTotal" value="${v.total||0}" min="0"></div>
+      <div class="field"><label>المخصّص الشهري للاستثمار — يُخصم من الراتب (ر.س)</label><input type="number" id="vMonthly" value="${v.monthly||0}" min="0"></div>
     </div>
     <div class="modal-foot">
       <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
@@ -1573,7 +1674,7 @@ function openSettings(){
     </div>`).join('');
 
   openModal(`
-    <div class="modal-head"><h3>الإعدادات والفئات</h3><p>عدّل الفئات أو أضِف فئة جديدة.</p></div>
+    <div class="modal-head"><h3>الإعدادات والفئات لهذا الشهر</h3><p>أي إضافة أو حذف أو تعديل هنا يخص الشهر المعروض فقط، ولا يغيّر الأشهر الأخرى.</p></div>
     <div class="modal-body" style="max-height:46vh;overflow:auto">
       ${rows}
       <button id="addCat" style="width:100%;margin-top:6px;padding:10px;border:1px dashed var(--gold);border-radius:10px;color:var(--gold-deep);font-weight:600;background:rgba(201,161,74,.06)">+ إضافة فئة جديدة</button>
@@ -1812,19 +1913,7 @@ function bind(){
     S = seedState();
     await save();
   }
-  if (!S.currentMonth) S.currentMonth = monthKey(new Date());
-  // migrate / ensure savings & investment exist
-  if (!S.savings){
-    const g = S.goal || {};
-    S.savings = { name:g.name||'صندوق الطوارئ', balance:g.saved||0, monthly:0, goal:g.target||0 };
-  }
-  if (!S.investment){
-    S.investment = { entity:'', total:0, monthly:0 };
-  }
-  if (!S.living){
-    S.living = { monthly: 0 };
-  }
-  delete S.goal;
+  normalizeState();
   save();
   bind();
   render();
@@ -1851,6 +1940,7 @@ window.addEventListener('storage', (e)=>{
   if (e.key !== KEY || !e.newValue || !validStoredState(e.newValue)) return;
   try{
     S = JSON.parse(e.newValue);
+    normalizeState();
     render();
     updateSaveStatus(true);
   }catch(err){}
@@ -2012,7 +2102,7 @@ function renderDeficit(){
         <div class="ct">
           <div class="t">تجاوزت مخصّصك الشهري بالكامل</div>
           <p>صرفت <b class="num">${fmt(spent)}</b> ر.س من أصل <b class="num">${fmt(monthly)}</b> ر.س — أي بزيادة <b class="num">${fmt(-remainingBudget)}</b> ر.س.
-          ${daysRemaining>0 ? `لتفادي مزيد من العجز، أوقف الصرف من هذا البند قدر الإمكان في الأيام الـ <b class="num">${daysRemaining}</b> المتبقية، أو عوّض الفرق من بند «غير الموزّع».` : 'انتهى الشهر — راجع مخصّص الشهر القادم.'}</p>
+          ${daysRemaining>0 ? `لتفادي مزيد من العجز، أوقف الصرف من هذا البند قدر الإمكان في الأيام الـ <b class="num">${daysRemaining}</b> المتبقية، أو عوّض الفرق من بند «الفائض المتاح».` : 'انتهى الشهر — راجع مخصّص الشهر القادم.'}</p>
         </div>
       </div>`;
   } else if (needsTreatment && daysRemaining>0){
@@ -2078,7 +2168,7 @@ function renderEmergency(ctx){
     {v:'savings',      label:'المدخرات (الرصيد)'},
     {v:'investment',   label:'الاستثمار (الإجمالي)'},
     {v:'living',       label:'المصروف الشهري'},
-    {v:'unallocated',  label:'غير الموزّع'},
+    {v:'unallocated',  label:'الفائض المتاح'},
   ].concat(S.categories.map(c=>({v:'cat:'+c.id, label:'فئة: '+c.name})));
 
   const sourceLabel = (src)=>{
