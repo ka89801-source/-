@@ -381,6 +381,32 @@
   .save-ok{color:var(--teal);font-weight:700}
   .save-bad{color:var(--clay);font-weight:700}
 
+
+
+  /* ---------- الحساب والمزامنة السحابية ---------- */
+  .auth-gate{position:fixed;inset:0;background:rgba(8,23,38,.68);backdrop-filter:blur(5px);
+    z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
+  .auth-gate.show{display:flex}
+  .auth-card{width:100%;max-width:430px;background:var(--card);border:1px solid var(--line);
+    border-radius:22px;box-shadow:0 30px 90px rgba(8,23,38,.42);overflow:hidden}
+  .auth-card-head{padding:24px 24px 8px;text-align:center}
+  .auth-card-head .auth-mark{width:50px;height:50px;border-radius:15px;margin:0 auto 12px;
+    background:linear-gradient(150deg,var(--ink-800),var(--ink-600));display:grid;place-items:center;color:var(--gold-soft)}
+  .auth-card-head h3{font-family:'Cairo',sans-serif;font-size:21px;font-weight:800;color:var(--ink-800)}
+  .auth-card-head p{font-size:13px;color:var(--text-soft);margin-top:6px;line-height:1.7}
+  .auth-card-body{padding:14px 24px 24px}
+  .auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--parchment-2);
+    padding:5px;border-radius:12px;margin-bottom:14px;border:1px solid var(--line)}
+  .auth-tabs button{border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;color:var(--text-soft)}
+  .auth-tabs button.active{background:#fff;color:var(--ink-800);box-shadow:var(--shadow)}
+  .auth-note{font-size:12px;color:var(--text-soft);line-height:1.7;margin-top:11px;background:var(--parchment);
+    border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+  .auth-error{display:none;margin-top:10px;padding:10px 12px;border-radius:10px;
+    background:rgba(181,86,63,.10);border:1px solid rgba(181,86,63,.24);color:var(--clay);font-size:12.5px;font-weight:600;line-height:1.6}
+  .auth-error.show{display:block}
+  .cloud-ok{color:var(--teal);font-weight:700}
+  .cloud-warn{color:var(--gold-deep);font-weight:700}
+
   /* ---------- Modal ---------- */
   .overlay{position:fixed;inset:0;background:rgba(8,23,38,.5);backdrop-filter:blur(3px);
     display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
@@ -536,6 +562,10 @@
       <span class="label" id="monthLabel">—</span>
       <button id="nextMonth" title="الشهر التالي"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
     </div>
+    <button class="ghost-btn" id="accountBtn" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+      الحساب
+    </button>
     <button class="ghost-btn" id="settingsBtn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       الإعدادات
@@ -674,6 +704,32 @@
   </footer>
 </div>
 
+
+
+<!-- Auth gate -->
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-card-head">
+      <div class="auth-mark">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <h3>تسجيل الدخول إلى رَصيد</h3>
+      <p>ادخل بنفس البريد وكلمة المرور من الجوال واللابتوب لتظهر لك نفس البيانات دائمًا.</p>
+    </div>
+    <div class="auth-card-body">
+      <div class="auth-tabs">
+        <button id="authLoginTab" class="active" type="button">دخول</button>
+        <button id="authSignupTab" type="button">حساب جديد</button>
+      </div>
+      <div class="field"><label>البريد الإلكتروني</label><input type="email" id="authEmail" autocomplete="email" placeholder="name@example.com"></div>
+      <div class="field"><label>كلمة المرور</label><input type="password" id="authPassword" autocomplete="current-password" placeholder="••••••••" minlength="6"></div>
+      <div class="auth-error" id="authError"></div>
+      <button class="btn-primary" id="authSubmit" style="width:100%;padding:12px;border-radius:12px;font-weight:800;margin-top:12px">دخول</button>
+      <div class="auth-note" id="authHint">عند الدخول أول مرة من اللابتوب ستُرفع بياناتك الحالية إلى السحابة. بعد ذلك ادخل بنفس الحساب من الجوال.</div>
+    </div>
+  </div>
+</div>
+
 <!-- Generic modal -->
 <div class="overlay" id="overlay">
   <div class="modal" id="modal"></div>
@@ -681,16 +737,27 @@
 
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span id="toastMsg"></span></div>
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
-   رَصيد — Personal salary & expense manager (self-contained)
-   Storage: window.storage (Claude artifact) → localStorage fallback
+   رَصيد — Personal salary & expense manager
+   Storage: Supabase cloud sync + localStorage fallback/backup
    ============================================================ */
 
 const KEY = 'raseed:state:v2';
 const BACKUP_KEY = KEY + ':backup';
 const LAST_SAVED_KEY = KEY + ':lastSaved';
+const SUPABASE_URL = 'https://zpgbgqehyewkpikbsovq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_MlJ4DjSIayVyGQtt6fYelw_2hjUM_0g';
 let storageFailureNotified = false;
+let supabaseDb = null;
+let currentUser = null;
+let authMode = 'login';
+let cloudSaveTimer = null;
+let cloudSaveRunning = false;
+let isCloudHydrating = false;
+let lastSyncedJSON = '';
+let lastCloudUpdatedAt = null;
 
 /* ---- storage layer: localStorage أولًا مع تحقق ونسخة احتياطية ---- */
 function validStoredState(raw){
@@ -699,6 +766,24 @@ function validStoredState(raw){
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' && parsed.months && typeof parsed.months === 'object';
   }catch(e){ return false; }
+}
+
+function validStateObject(obj){
+  return !!(obj && typeof obj === 'object' && obj.months && typeof obj.months === 'object');
+}
+function cloneState(obj){
+  return JSON.parse(JSON.stringify(obj));
+}
+function initSupabaseClient(){
+  if (supabaseDb) return supabaseDb;
+  if (!window.supabase || !window.supabase.createClient){
+    console.error('Supabase library was not loaded');
+    return null;
+  }
+  supabaseDb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+  });
+  return supabaseDb;
 }
 
 const Store = {
@@ -794,13 +879,18 @@ function monthName(key){
 function expensesOf(monthK){ return (S.months[monthK] && S.months[monthK].expenses) || []; }
 function catById(id){ return S.categories.find(c=>c.id===id); }
 
-function updateSaveStatus(ok){
+function updateSaveStatus(ok, message, tone){
   const el = document.getElementById('saveStatus');
   if (!el) return;
+  if (message){
+    el.textContent = message;
+    el.className = tone || (ok ? 'save-ok' : 'save-bad');
+    return;
+  }
   if (ok){
     const now = new Date();
-    el.textContent = 'محفوظ تلقائيًا · ' + now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
-    el.className = 'save-ok';
+    el.textContent = (currentUser ? 'محفوظ محليًا · جارٍ رفعه للسحابة · ' : 'محفوظ محليًا فقط · ') + now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+    el.className = currentUser ? 'cloud-warn' : 'save-ok';
   } else {
     el.textContent = 'تعذّر الحفظ على هذا المتصفح';
     el.className = 'save-bad';
@@ -811,14 +901,84 @@ function save(){
   try{
     Store.set(KEY, JSON.stringify(S));
     updateSaveStatus(true);
+    if (currentUser && !isCloudHydrating) queueCloudSave();
     return true;
   }catch(e){
     console.error('Raseed save failed:', e);
     updateSaveStatus(false);
     if (!storageFailureNotified){
       storageFailureNotified = true;
-      setTimeout(()=>toast('تعذّر حفظ البيانات. تأكد من السماح ببيانات المواقع وعدم استخدام التصفح الخاص.'), 0);
+      setTimeout(()=>toast('تعذّر حفظ البيانات محليًا. تأكد من السماح ببيانات المواقع وعدم استخدام التصفح الخاص.'), 0);
     }
+    return false;
+  }
+}
+
+function queueCloudSave(delay=650){
+  if (!supabaseDb || !currentUser || !S) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(()=>saveCloudNow(), delay);
+}
+
+async function saveCloudNow(){
+  if (!supabaseDb || !currentUser || !S || cloudSaveRunning) return false;
+  const payloadJSON = JSON.stringify(S);
+  if (payloadJSON === lastSyncedJSON) return true;
+  cloudSaveRunning = true;
+  try{
+    updateSaveStatus(true, 'جارٍ المزامنة مع السحابة…', 'cloud-warn');
+    const stamp = new Date().toISOString();
+    const { error } = await supabaseDb
+      .from('raseed_data')
+      .upsert({ user_id: currentUser.id, state: cloneState(S), updated_at: stamp }, { onConflict:'user_id' });
+    if (error) throw error;
+    lastSyncedJSON = payloadJSON;
+    lastCloudUpdatedAt = stamp;
+    const now = new Date();
+    updateSaveStatus(true, 'محفوظ سحابيًا · ' + now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'}), 'cloud-ok');
+    return true;
+  }catch(e){
+    console.error('Cloud save failed:', e);
+    updateSaveStatus(false, 'تعذّر الحفظ السحابي · محفوظ محليًا مؤقتًا', 'save-bad');
+    return false;
+  }finally{
+    cloudSaveRunning = false;
+  }
+}
+
+async function loadCloudState(){
+  if (!supabaseDb || !currentUser) return false;
+  try{
+    updateSaveStatus(true, 'جارٍ تحميل بياناتك السحابية…', 'cloud-warn');
+    const { data, error } = await supabaseDb
+      .from('raseed_data')
+      .select('state, updated_at')
+      .eq('user_id', currentUser.id)
+      .maybeSingle();
+    if (error) throw error;
+
+    if (data && validStateObject(data.state)){
+      isCloudHydrating = true;
+      S = data.state;
+      lastSyncedJSON = JSON.stringify(S);
+      lastCloudUpdatedAt = data.updated_at || null;
+      Store.set(KEY, JSON.stringify(S));
+      isCloudHydrating = false;
+      render();
+      updateAccountButton();
+      updateSaveStatus(true, 'محفوظ سحابيًا · تم تحميل بياناتك', 'cloud-ok');
+      return true;
+    }
+
+    // لا توجد بيانات سحابية بعد: ارفع بيانات هذا الجهاز كنسخة أولى للحساب
+    lastSyncedJSON = '';
+    await saveCloudNow();
+    return true;
+  }catch(e){
+    isCloudHydrating = false;
+    console.error('Cloud load failed:', e);
+    updateSaveStatus(false, 'تعذّر تحميل السحابة · يعمل بالنسخة المحلية', 'save-bad');
+    toast('لم نتمكن من تحميل البيانات السحابية. تحقق من الاتصال أو إعدادات Supabase.');
     return false;
   }
 }
@@ -1467,10 +1627,178 @@ function toast(msg){
   toastT = setTimeout(()=> t.classList.remove('show'), 2200);
 }
 
+
+/* ---- Supabase Auth ---- */
+function updateAccountButton(){
+  const b = document.getElementById('accountBtn');
+  if (!b) return;
+  b.style.display = currentUser ? 'inline-flex' : 'none';
+  b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>${currentUser ? 'حسابي' : 'الحساب'}`;
+}
+function showAuthGate(message){
+  const gate = document.getElementById('authGate');
+  if (!gate) return;
+  gate.classList.add('show');
+  if (message) setAuthError(message, true);
+  setupAuthGateEvents();
+}
+function hideAuthGate(){
+  const gate = document.getElementById('authGate');
+  if (gate) gate.classList.remove('show');
+}
+function setAuthError(msg, asInfo=false){
+  const el = document.getElementById('authError');
+  if (!el) return;
+  if (!msg){ el.classList.remove('show'); el.textContent=''; return; }
+  el.textContent = msg;
+  el.classList.add('show');
+  el.style.color = asInfo ? 'var(--teal)' : 'var(--clay)';
+  el.style.borderColor = asInfo ? 'rgba(46,125,110,.24)' : 'rgba(181,86,63,.24)';
+  el.style.background = asInfo ? 'rgba(46,125,110,.10)' : 'rgba(181,86,63,.10)';
+}
+function setAuthMode(mode){
+  authMode = mode;
+  const login = document.getElementById('authLoginTab');
+  const signup = document.getElementById('authSignupTab');
+  const submit = document.getElementById('authSubmit');
+  const hint = document.getElementById('authHint');
+  if (!login || !signup || !submit || !hint) return;
+  login.classList.toggle('active', mode==='login');
+  signup.classList.toggle('active', mode==='signup');
+  submit.textContent = mode==='login' ? 'دخول' : 'إنشاء حساب';
+  hint.textContent = mode==='login'
+    ? 'ادخل بنفس الحساب من أي جهاز لتظهر لك نفس بيانات رَصيد.'
+    : 'أنشئ حسابًا بالبريد وكلمة مرور. إذا طلب Supabase تأكيد البريد، افتح رسالة التأكيد ثم سجّل الدخول.';
+  setAuthError('');
+}
+let authEventsReady = false;
+function setupAuthGateEvents(){
+  if (authEventsReady) return;
+  authEventsReady = true;
+  document.getElementById('authLoginTab').onclick = ()=>setAuthMode('login');
+  document.getElementById('authSignupTab').onclick = ()=>setAuthMode('signup');
+  document.getElementById('authSubmit').onclick = handleAuthSubmit;
+  ['authEmail','authPassword'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') handleAuthSubmit(); });
+  });
+}
+async function handleAuthSubmit(){
+  const client = initSupabaseClient();
+  if (!client){ setAuthError('لم يتم تحميل مكتبة Supabase. حدّث الصفحة وتأكد من اتصال الإنترنت.'); return; }
+  const email = (document.getElementById('authEmail').value || '').trim();
+  const password = document.getElementById('authPassword').value || '';
+  if (!email || !password){ setAuthError('أدخل البريد الإلكتروني وكلمة المرور.'); return; }
+  if (password.length < 6){ setAuthError('كلمة المرور يجب أن تكون 6 أحرف على الأقل.'); return; }
+
+  const btn = document.getElementById('authSubmit');
+  btn.disabled = true;
+  btn.textContent = authMode === 'login' ? 'جارٍ الدخول…' : 'جارٍ إنشاء الحساب…';
+  setAuthError('');
+  try{
+    if (authMode === 'signup'){
+      const { data, error } = await client.auth.signUp({ email, password });
+      if (error) throw error;
+      if (!data.session){
+        setAuthError('تم إنشاء الحساب. إذا وصلت رسالة تأكيد على بريدك فافتحها، ثم ارجع وسجّل الدخول.', true);
+        setAuthMode('login');
+        return;
+      }
+      currentUser = data.user;
+    } else {
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      currentUser = data.user;
+    }
+    hideAuthGate();
+    updateAccountButton();
+    await loadCloudState();
+    toast('تم تسجيل الدخول والمزامنة');
+  }catch(e){
+    console.error('Auth failed:', e);
+    setAuthError(arAuthError(e && e.message ? e.message : 'تعذّر تسجيل الدخول.'));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'دخول' : 'إنشاء حساب';
+  }
+}
+function arAuthError(msg){
+  const s = String(msg || '').toLowerCase();
+  if (s.includes('invalid login') || s.includes('invalid credentials')) return 'بيانات الدخول غير صحيحة. تأكد من البريد وكلمة المرور.';
+  if (s.includes('email not confirmed')) return 'البريد غير مؤكد. افتح رسالة التأكيد من بريدك ثم حاول الدخول.';
+  if (s.includes('user already registered')) return 'يوجد حساب بهذا البريد. اختر دخول بدل حساب جديد.';
+  return msg;
+}
+async function setupCloudAuth(){
+  const client = initSupabaseClient();
+  if (!client){
+    updateSaveStatus(false, 'تعذّر تشغيل Supabase · يعمل محليًا فقط', 'save-bad');
+    showAuthGate('تعذّر تحميل Supabase. حدّث الصفحة وتأكد من اتصال الإنترنت.');
+    return;
+  }
+  try{
+    const { data:{ session } } = await client.auth.getSession();
+    if (session && session.user){
+      currentUser = session.user;
+      updateAccountButton();
+      await loadCloudState();
+    } else {
+      currentUser = null;
+      updateAccountButton();
+      updateSaveStatus(false, 'سجّل الدخول لتفعيل الحفظ السحابي', 'save-bad');
+      showAuthGate();
+    }
+    client.auth.onAuthStateChange(async (event, session)=>{
+      if (event === 'SIGNED_IN' && session && session.user){
+        currentUser = session.user;
+        hideAuthGate();
+        updateAccountButton();
+        await loadCloudState();
+      }
+      if (event === 'SIGNED_OUT'){
+        currentUser = null;
+        lastSyncedJSON = '';
+        updateAccountButton();
+        updateSaveStatus(false, 'تم تسجيل الخروج · الحفظ السحابي متوقف', 'save-bad');
+        showAuthGate();
+      }
+    });
+  }catch(e){
+    console.error('Auth setup failed:', e);
+    updateSaveStatus(false, 'تعذّر الاتصال بالحساب السحابي', 'save-bad');
+    showAuthGate('تعذّر الاتصال بالحساب السحابي. تحقق من إعدادات Supabase.');
+  }
+}
+function openAccountModal(){
+  const email = currentUser && currentUser.email ? currentUser.email : '—';
+  openModal(`
+    <div class="modal-head"><h3>الحساب والمزامنة</h3><p>أنت مسجل الدخول بالبريد: <b>${email}</b></p></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-soft);line-height:1.8">استخدم هذا الحساب نفسه على الجوال واللابتوب حتى تظهر لك نفس البيانات.</p>
+      <div class="auth-note">${lastCloudUpdatedAt ? 'آخر تحديث سحابي: ' + new Date(lastCloudUpdatedAt).toLocaleString('ar-SA') : 'سيتم إنشاء أول نسخة سحابية عند الحفظ.'}</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">إغلاق</button>
+      <button class="btn-primary" id="forceCloudSync">مزامنة الآن</button>
+      <button class="btn-danger" id="logoutBtn">خروج</button>
+    </div>`);
+  document.getElementById('forceCloudSync').onclick = async ()=>{
+    await saveCloudNow();
+    closeModal();
+    toast('تمت المزامنة');
+  };
+  document.getElementById('logoutBtn').onclick = async ()=>{
+    if (supabaseDb) await supabaseDb.auth.signOut();
+    closeModal();
+  };
+}
+
 /* ---- bind ---- */
 function bind(){
   document.getElementById('editSalary').onclick = editSalary;
   document.getElementById('settingsBtn').onclick = openSettings;
+  const accountBtn = document.getElementById('accountBtn');
+  if (accountBtn) accountBtn.onclick = openAccountModal;
   document.getElementById('prevMonth').onclick = ()=>shiftMonth(-1);
   document.getElementById('nextMonth').onclick = ()=>shiftMonth(1);
 }
@@ -1500,6 +1828,7 @@ function bind(){
   save();
   bind();
   render();
+  await setupCloudAuth();
 
   if (!Store.available()){
     updateSaveStatus(false);
@@ -1510,8 +1839,9 @@ function bind(){
 })();
 
 /* حفظ احتياطي عند مغادرة الصفحة أو إخفائها */
-window.addEventListener('pagehide', ()=>{ if (S) save(); });
-window.addEventListener('beforeunload', ()=>{ if (S) save(); });
+window.addEventListener('pagehide', ()=>{ if (S) { save(); if(currentUser) saveCloudNow(); } });
+window.addEventListener('beforeunload', ()=>{ if (S) { save(); if(currentUser) saveCloudNow(); } });
+window.addEventListener('online', ()=>{ if (currentUser) saveCloudNow(); });
 document.addEventListener('visibilitychange', ()=>{
   if (document.visibilityState === 'hidden' && S) save();
 });
